@@ -12,6 +12,8 @@ if [[ -n ${REPO_SIGNING_KEY:-} ]]; then
     test -s keys/repository.asc && test -s keys/fingerprint
     fingerprint=$(tr -d '[:space:]' < keys/fingerprint)
     [[ $fingerprint =~ ^[A-F0-9]{40}$ ]]
+    actual=$(gpg --batch --with-colons --show-keys keys/repository.asc | awk -F: '$1 == "fpr" {print $10; exit}')
+    [[ $actual == "$fingerprint" ]] || { echo 'Public key fingerprint mismatch'; exit 1; }
     gpg --batch --import keys/repository.asc
     printf '%s' "$REPO_SIGNING_KEY" | gpg --batch --import
     unset REPO_SIGNING_KEY
