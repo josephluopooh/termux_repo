@@ -84,7 +84,7 @@ Inside WeeChat, use a new strong password and bind to localhost first:
 ```text
 /set relay.network.bind_address 127.0.0.1
 /set relay.network.password YOUR_OWN_STRONG_PASSWORD
-/relay add api 9000
+/relay add ipv4.api 9000
 ```
 
 Then, in another local terminal (curl prompts for the password):

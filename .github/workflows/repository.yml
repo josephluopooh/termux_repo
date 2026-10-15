@@ -73,7 +73,7 @@ jobs:
           name: runtime-evidence-aarch64
           path: dist/evidence/
       - name: Install Pacman repository tools on the Ubuntu runner
-        run: sudo apt-get update && sudo apt-get install -y pacman-package-manager
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends pacman-package-manager libarchive-tools
       - name: Assemble, sign when configured, and publish a verified snapshot
         env:
           GH_TOKEN: ${{ github.token }}
