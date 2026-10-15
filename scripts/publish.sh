@@ -15,13 +15,16 @@ if [[ -n ${REPO_SIGNING_KEY:-} ]]; then
     gpg --batch --import keys/repository.asc
     printf '%s' "$REPO_SIGNING_KEY" | gpg --batch --import
     unset REPO_SIGNING_KEY
+    printf '%s' "${REPO_SIGNING_PASSPHRASE:-}" > "$GNUPGHOME/passphrase"
+    chmod 600 "$GNUPGHOME/passphrase"
+    unset REPO_SIGNING_PASSPHRASE
     gpg --batch --list-secret-keys "$fingerprint" >/dev/null
     signed=true
     cp keys/repository.asc dist/repository-key.asc
     cp keys/fingerprint dist/repository-key-fingerprint.txt
     # repo-add embeds these signatures in the sync database.
     for package in dist/*.pkg.tar.xz; do
-        gpg --batch --yes --local-user "$fingerprint" --detach-sign "$package"
+        gpg --batch --yes --pinentry-mode loopback --passphrase-file "$GNUPGHOME/passphrase" --local-user "$fingerprint" --detach-sign "$package"
     done
 fi
 python3 scripts/repository.py dist
@@ -51,12 +54,12 @@ tar -czf dist/build-evidence.tar.gz -C dist evidence
 rm -rf dist/evidence
 if $signed; then
     for file in dist/termux_repo-aarch64.db{,.tar.gz} dist/termux_repo-aarch64.files{,.tar.gz} dist/repository-index.json dist/build-evidence.tar.gz; do
-        gpg --batch --yes --local-user "$fingerprint" --detach-sign "$file"
+        gpg --batch --yes --pinentry-mode loopback --passphrase-file "$GNUPGHOME/passphrase" --local-user "$fingerprint" --detach-sign "$file"
     done
 fi
 (cd dist && find . -maxdepth 1 -type f ! -name SHA256SUMS ! -name SHA256SUMS.sig -printf '%f\n' | LC_ALL=C sort | xargs sha256sum > SHA256SUMS)
 if $signed; then
-    gpg --batch --yes --local-user "$fingerprint" --detach-sign dist/SHA256SUMS
+    gpg --batch --yes --pinentry-mode loopback --passphrase-file "$GNUPGHOME/passphrase" --local-user "$fingerprint" --detach-sign dist/SHA256SUMS
     for sig in dist/*.sig; do gpg --batch --verify "$sig" "${sig%.sig}"; done
     status='Signed Pacman repository; aarch64 / Android 7+ / com.termux Bionic prefix.'
 else

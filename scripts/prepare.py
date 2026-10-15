@@ -17,6 +17,9 @@ assert re.fullmatch(r'[0-9]+(?:\.[0-9]+)*', revision)
 build = root / 'build'
 subprocess.run(['git', 'clone', '--no-checkout', '--filter=blob:none', config['upstream_url'], str(build)], check=True)
 subprocess.run(['git', '-C', str(build), 'checkout', '--detach', config['upstream_commit']], check=True)
+for patch in sorted((root / 'patches').glob('*.patch')):
+    subprocess.run(['git', '-C', str(build), 'apply', '--check', str(patch)], check=True)
+    subprocess.run(['git', '-C', str(build), 'apply', str(patch)], check=True)
 for directory in (root / 'packages').iterdir():
     if directory.is_dir():
         shutil.copytree(directory, build / 'packages' / directory.name, dirs_exist_ok=True)
