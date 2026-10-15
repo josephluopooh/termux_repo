@@ -35,10 +35,10 @@ test "$status" = 401
 weechat-headless --stdout -d "$work/client" -r '/remote add test http://127.0.0.1:19001 -password=ci-loopback-only;/remote connect test' > "$work/client.log" 2>&1 &
 client_pid=$!
 for attempt in {1..30}; do
-    if grep -q 'Connected to remote' "$work/client.log"; then break; fi
+    if grep -Fq 'remote[test]: connected to' "$work/client.log"; then break; fi
     sleep 1
 done
 cat "$work/client.log"
 # Source and compiled-symbol checks also prove that remote API code is included.
-grep -i 'connected' "$work/client.log"
+grep -F 'remote[test]: connected to' "$work/client.log"
 echo 'PASS: Pacman install, Android/aarch64 startup, authenticated API JSON, HTTP 401 without credentials, remote connection'
