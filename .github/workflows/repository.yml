@@ -27,3 +27,53 @@ jobs:
           path: dist/
           if-no-files-found: error
           retention-days: 14
+  runtime:
+    needs: build
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: packages-aarch64
+          path: dist/
+      - name: Install and exercise WeeChat in native aarch64 Termux-Pacman
+        run: |
+          docker run --rm --user 1000:1000 \
+            -v "$PWD/dist:/packages:ro" -v "$PWD/scripts:/tests:ro" \
+            --entrypoint /data/data/com.termux/files/usr/bin/bash \
+            termux/termux-docker-pacman@sha256:489fa5abfae9244b1c5229cdff6b77007846d7ab7a028768ce1c92967c7999e4 \
+            /tests/runtime-test.sh | tee runtime-test.log
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: runtime-evidence-aarch64
+          path: runtime-test.log
+  publish:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: [build, runtime]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: packages-aarch64
+          path: dist/
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: runtime-evidence-aarch64
+          path: dist/evidence/
+      - name: Install Pacman repository tools on the Ubuntu runner
+        run: sudo apt-get update && sudo apt-get install -y pacman-package-manager
+      - name: Assemble, sign when configured, and publish a verified snapshot
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO_SIGNING_KEY: ${{ secrets.REPO_SIGNING_KEY }}
+        run: bash scripts/publish.sh

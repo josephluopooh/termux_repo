@@ -24,7 +24,7 @@ for archive in sorted(folder.glob('*.pkg.tar.xz')):
         for member in tar.getmembers():
             path = PurePosixPath(member.name)
             assert not path.is_absolute() and '..' not in path.parts, member.name
-            assert member.name.startswith('data/') or member.name in ('.PKGINFO', '.BUILDINFO', '.MTREE', '.INSTALL'), member.name
+            assert (member.name == 'data' or member.name.startswith('data/')) or member.name in ('.PKGINFO', '.BUILDINFO', '.MTREE', '.INSTALL'), member.name
         if name == 'weechat-cjson':
             assert 'cjson' in info['depend']
             assert 'weechat' in info['conflict']
