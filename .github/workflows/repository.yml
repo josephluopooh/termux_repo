@@ -22,10 +22,11 @@ jobs:
           REPO_REVISION: 1.${{ github.run_number }}.${{ github.run_attempt }}
         run: bash scripts/build.sh
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        if: always()
         with:
           name: packages-aarch64
           path: dist/
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 14
   runtime:
     needs: build

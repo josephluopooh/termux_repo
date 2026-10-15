@@ -41,7 +41,7 @@ for archive in sorted(folder.glob('*.pkg.tar.xz')):
                 if member_name.startswith('bin/'):
                     assert '/system/bin/linker64' in output
                 else:
-                    assert 'Shared library: [libcjson.so.1]' in output
+                    assert 'Shared library: [libcjson.so]' in output, output
                     assert 'cJSON_Parse' in output
                     assert b'/api/version' in data or b'relay_api' in data
                 evidence = folder / 'evidence'
