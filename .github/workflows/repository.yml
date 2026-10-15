@@ -41,6 +41,7 @@ jobs:
           path: dist/
       - name: Install and exercise WeeChat in native aarch64 Termux-Pacman
         run: |
+          set -euo pipefail
           docker run --rm --user 1000:1000 \
             -v "$PWD/dist:/packages:ro" -v "$PWD/scripts:/tests:ro" \
             --entrypoint /data/data/com.termux/files/usr/bin/bash \

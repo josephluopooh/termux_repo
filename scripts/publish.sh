@@ -57,7 +57,8 @@ if $signed; then
         gpg --batch --yes --pinentry-mode loopback --passphrase-file "$GNUPGHOME/passphrase" --local-user "$fingerprint" --detach-sign "$file"
     done
 fi
-(cd dist && find . -maxdepth 1 -type f ! -name SHA256SUMS ! -name SHA256SUMS.sig -printf '%f\n' | LC_ALL=C sort | xargs sha256sum > SHA256SUMS)
+(cd dist && find . -maxdepth 1 -type f ! -name SHA256SUMS ! -name SHA256SUMS.sig -printf '%f\n' | LC_ALL=C sort | xargs sha256sum) > /tmp/repository-SHA256SUMS
+mv /tmp/repository-SHA256SUMS dist/SHA256SUMS
 if $signed; then
     gpg --batch --yes --pinentry-mode loopback --passphrase-file "$GNUPGHOME/passphrase" --local-user "$fingerprint" --detach-sign dist/SHA256SUMS
     for sig in dist/*.sig; do gpg --batch --verify "$sig" "${sig%.sig}"; done
