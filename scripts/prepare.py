@@ -9,6 +9,9 @@ import subprocess
 
 root = Path(__file__).resolve().parents[1]
 config = json.loads((root / 'sources.json').read_text())
+assert config['architecture'] == 'aarch64', 'Adding an architecture requires ABI/runtime validation'
+assert config['android_api'] == 24
+assert config['prefix'] == '/data/data/com.termux/files/usr'
 packages = json.loads((root / 'packages.json').read_text())['packages']
 assert packages and len(packages) == len(set(packages))
 assert all(re.fullmatch(r'[a-z0-9][a-z0-9+.-]*', p) for p in packages)
@@ -31,3 +34,9 @@ for name in packages:
         stream.write(f'\nTERMUX_PKG_REVISION="{revision}"\n')
 shutil.copy(root / 'scripts' / 'container-build.sh', build / 'custom-build.sh')
 (build / 'custom-packages.txt').write_text('\n'.join(packages) + '\n')
+
+# Exercise upstream's real dependency parser before pulling the large image.
+for name in packages:
+    subprocess.run(['./scripts/buildorder.py', '-i', 'packages/' + name,
+                    'packages', 'root-packages', 'x11-packages'],
+                   cwd=build, stdout=subprocess.DEVNULL, check=True)
