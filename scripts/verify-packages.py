@@ -9,6 +9,7 @@ import tarfile
 import tempfile
 
 folder = Path(sys.argv[1])
+selected = set(json.loads((Path(__file__).resolve().parents[1] / 'packages.json').read_text())['packages'])
 metadata = {}
 for archive in sorted(folder.glob('*.pkg.tar.xz')):
     with tarfile.open(archive) as tar:
@@ -19,6 +20,7 @@ for archive in sorted(folder.glob('*.pkg.tar.xz')):
                 k, v = line.split(' = ', 1)
                 info.setdefault(k, []).append(v)
         name, arch = info['pkgname'][0], info['arch'][0]
+        assert info['pkgbase'][0] in selected, f'Unselected package in publication output: {name}'
         assert arch in ('aarch64', 'any'), (archive, arch)
         assert name not in metadata, f'Duplicate package: {name}'
         assert archive.name == f'{name}-{info["pkgver"][0]}-{arch}.pkg.tar.xz'

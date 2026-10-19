@@ -132,6 +132,9 @@ and [API authentication](https://weechat.org/files/doc/weechat/stable/weechat_re
    Every build uses the **entire package manifest**, including subpackages; adding
    a package requires no workflow edits and does not remove existing packages.
    Removing a manifest entry intentionally removes it from the next sync index.
+   Only selected recipes and their subpackages are indexed. Fallback builds of
+   official dependencies remain build inputs; the native runtime test resolves
+   those dependencies from the official repositories.
 
 Each build gets a unique Pacman revision `1.RUN_NUMBER.RUN_ATTEMPT` for selected
 recipes. This avoids overwriting different bytes under a cached package filename.

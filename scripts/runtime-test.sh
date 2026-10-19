@@ -5,7 +5,7 @@ set -euo pipefail
 # by its LocalFileSigLevel=Optional; signed upstream databases remain required.
 pacman -Syu --noconfirm
 pacman -U --noconfirm /packages/*.pkg.tar.xz
-pacman -Q cjson weechat-cjson toot
+pacman -Q cjson weechat-cjson toot python ca-certificates
 weechat-headless --version
 work=$(mktemp -d)
 server_pid=''
@@ -28,13 +28,14 @@ HOME="$work/toot-home" XDG_CONFIG_HOME="$work/toot-home" toot --version
 HOME="$work/toot-home" XDG_CONFIG_HOME="$work/toot-home" toot --help
 HOME="$work/toot-home" XDG_CONFIG_HOME="$work/toot-home" toot tui --help
 python -IBS /tests/toot-smoke-test.py /data/data/com.termux/files/usr/lib/toot
-weechat-headless --stdout -d "$work/server" -r '/set logger.file.flush_delay 0;/set logger.level.core.weechat 9' -r '/set relay.network.bind_address 127.0.0.1;/set relay.network.password ci-loopback-only;/relay add ipv4.api 19001' > "$work/server.log" 2>&1 &
+weechat-headless --stdout -d "$work/server" -r '/python eval print("PYTHON_PLUGIN_OK")' -r '/set logger.file.flush_delay 0;/set logger.level.core.weechat 9' -r '/set relay.network.bind_address 127.0.0.1;/set relay.network.password ci-loopback-only;/relay add ipv4.api 19001' > "$work/server.log" 2>&1 &
 server_pid=$!
 for _attempt in {1..30}; do
     if curl --fail --silent --show-error --max-time 2 -u plain:ci-loopback-only http://127.0.0.1:19001/api/version > "$work/version.json"; then break; fi
     sleep 1
 done
 cat "$work/version.json"
+grep -E '(^|[[:space:]:])PYTHON_PLUGIN_OK$' "$work/server.log"
 python - "$work/version.json" <<'PY'
 import json, sys
 version = json.load(open(sys.argv[1]))
