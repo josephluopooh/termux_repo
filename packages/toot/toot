@@ -1,0 +1,9 @@
+#!@TERMUX_PREFIX@/bin/python -IBS
+import sys
+
+# Keep the Pacman-owned dependencies independent of pip/user site packages.
+sys.path.insert(0, "@TERMUX_PREFIX@/lib/toot")
+
+from toot.cli import cli
+
+cli()

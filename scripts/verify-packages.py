@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Check actual Pacman metadata, Android ELF ABI, and cJSON relay linkage."""
 import json
+from email.parser import BytesParser
 from pathlib import Path, PurePosixPath
 import subprocess
 import sys
@@ -47,8 +48,35 @@ for archive in sorted(folder.glob('*.pkg.tar.xz')):
                 evidence = folder / 'evidence'
                 evidence.mkdir(exist_ok=True)
                 (evidence / (member_name.replace('/', '-') + '-elf.txt')).write_text(output)
+        if name == 'toot':
+            assert arch == 'any'
+            assert info['pkgver'][0].startswith('0.52.1-')
+            assert {'ca-certificates', 'python>=3.11.5-0'} <= set(info['depend'])
+            prefix = 'data/data/com.termux/files/usr/'
+            launcher = tar.extractfile(prefix + 'bin/toot').read().decode()
+            assert launcher.startswith('#!/data/data/com.termux/files/usr/bin/python -IBS\n')
+            assert tar.getmember(prefix + 'bin/toot').mode & 0o100
+            assert tar.getmember(prefix + 'lib/toot/certifi/cacert.pem').linkname == '/data/data/com.termux/files/usr/etc/tls/cert.pem'
+            lock = tar.extractfile(prefix + 'share/doc/toot/requirements.txt').read().decode()
+            distributions = {}
+            for member in tar.getmembers():
+                if member.name.startswith(prefix + 'lib/toot/') and member.name.endswith('.dist-info/METADATA'):
+                    distribution = BytesParser().parsebytes(tar.extractfile(member).read())
+                    distributions[distribution['Name'].lower().replace('-', '_')] = distribution['Version']
+            for line in lock.splitlines():
+                if not line or line.startswith('#'):
+                    continue
+                requirement = line.split()[0]
+                distribution, version = requirement.split('==')
+                normalized = distribution.lower().replace('-', '_')
+                assert distributions[normalized] == version, requirement
+            for member in tar.getmembers():
+                if member.isfile():
+                    assert not member.name.endswith(('.so', '.pyd', '.dll', '.exe', '.pyc')), member.name
+                    assert not tar.extractfile(member).read(4).startswith(b'\x7fELF'), member.name
+            assert not any('/site-packages/' in m.name for m in tar.getmembers())
         metadata[name] = {'filename': archive.name, **info}
-assert {'cjson', 'weechat-cjson'} <= metadata.keys(), metadata.keys()
+assert {'cjson', 'weechat-cjson', 'toot'} <= metadata.keys(), metadata.keys()
 for name, info in metadata.items():
     if name.startswith('weechat-cjson-'):
         assert any(d.startswith('weechat-cjson') for d in info['depend'])

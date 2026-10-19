@@ -6,10 +6,15 @@ hosted as complete GitHub Release snapshots. The first custom package is
 binary enabled. cJSON is built and published alongside it. Lua, Perl, Python,
 and Ruby plugins are separate `weechat-cjson-*-plugin` packages.
 
-**Current publication status:** signing-key setup requires the owner's approval.
-Until `keys/repository.asc`, `keys/fingerprint`, and the Actions signing secret
-are configured, successful builds are **unsigned prereleases**, not a trusted
-install endpoint. Do not disable signature verification to install them.
+**`toot` 0.52.1** provides the Mastodon CLI and its built-in terminal interface.
+Its hash-pinned pure-Python dependencies are packaged privately under `lib/toot`;
+Pacman owns all installed files, with no runtime pip installs. Python and CA
+certificates come from the official Termux-Pacman repository. Optional TUI image
+libraries are not included. Upstream still includes `toot tui` in this release,
+but marks it deprecated.
+
+**Current publication status:** signed publication is configured. Keep signature
+verification enabled and verify the public-key fingerprint as described below.
 See [signing setup](docs/signing.md).
 
 [Builds](https://github.com/josephluopooh/termux_repo/actions/workflows/repository.yml)
@@ -76,6 +81,20 @@ Update normally with `pacman -Syu`. To switch back, explicitly install official
 `main/weechat` and the corresponding official plugins in one transaction, and
 review the conflict prompts. Keep configuration backups: upstream versions may
 migrate configuration formats.
+
+Once the signed snapshot containing toot is published, install it using the same
+repository configuration:
+
+```sh
+pacman -Syu termux_repo-aarch64/toot
+toot --version
+toot --help
+toot tui --help
+```
+
+Use `toot login` or `toot login_cli` when you choose to connect your own account,
+then `toot tui` to open the terminal interface. Packaging tests use offline help
+commands and TUI rendering only; they do not log in or post to Mastodon.
 
 ## Verify the API
 
