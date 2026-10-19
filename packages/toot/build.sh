@@ -9,7 +9,6 @@ TERMUX_PKG_SHA256=b737173be5587522077c18c4024eb1741a4a30e59d3165e72fd6ce4519d2fe
 TERMUX_PKG_DEPENDS="ca-certificates, python (>= 3.11.5)"
 TERMUX_PKG_PLATFORM_INDEPENDENT=true
 TERMUX_PKG_AUTO_UPDATE=false
-TERMUX_PKG_PYTHON_RUNTIME_DEPS=false
 
 termux_step_configure() { :; }
 termux_step_make() { :; }

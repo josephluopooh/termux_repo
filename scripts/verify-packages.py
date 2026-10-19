@@ -50,6 +50,7 @@ for archive in sorted(folder.glob('*.pkg.tar.xz')):
                 (evidence / (member_name.replace('/', '-') + '-elf.txt')).write_text(output)
         if name == 'toot':
             assert arch == 'any'
+            assert '.INSTALL' not in tar.getnames(), 'toot must not have runtime install hooks'
             assert info['pkgver'][0].startswith('0.52.1-')
             assert {'ca-certificates', 'python>=3.11.5-0'} <= set(info['depend'])
             prefix = 'data/data/com.termux/files/usr/'
