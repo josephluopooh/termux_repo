@@ -24,9 +24,10 @@ jobs:
           set -uo pipefail
           mkdir -p probe-evidence
           result=0
-          for server in tshock tmodloader-patched; do
+          for server in tshock tmodloader-patched vanilla-pumpkin; do
             docker run --rm --user 1000:1000 \
               -v "$PWD/native-probe:/input:ro" -v "$PWD/scripts:/tests:ro" \
+              -v "$PWD/packages:/recipes:ro" \
               --entrypoint /data/data/com.termux/files/usr/bin/bash \
               termux/termux-docker-pacman@sha256:489fa5abfae9244b1c5229cdff6b77007846d7ab7a028768ce1c92967c7999e4 \
               /tests/probe-native-servers-runtime.sh "$server" 2>&1 | tee "probe-evidence/$server.log" || result=1

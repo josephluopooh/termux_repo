@@ -28,6 +28,10 @@ launcher = Path('native-probe/tshock-src/TShockLauncher/Program.cs')
 text = launcher.read_text(encoding='utf-8-sig')
 text = text.replace('Dictionary<string, Assembly> _cache', 'AppDomain.CurrentDomain.UnhandledException += (_, e) => Console.Error.WriteLine(e.ExceptionObject);\n\nDictionary<string, Assembly> _cache')
 launcher.write_text(text)
+api = Path('native-probe/tshock-src/TerrariaServerAPI/TerrariaServerAPI/Program.cs')
+text = api.read_text().replace('catch (Exception ex)\n', 'catch (Exception ex)\n')
+text = text.replace('ServerApi.LogWriter.ServerWriteLine("Server crashed', 'Console.Error.WriteLine("Original initialization exception: " + ex);\n\t\t\t\tServerApi.LogWriter.ServerWriteLine("Server crashed')
+api.write_text(text)
 PY
 result=0
 dotnet publish native-probe/tshock-src/TShockLauncher -c Release -f net9.0 \
@@ -77,6 +81,12 @@ class Probe {
 CS
     dotnet publish native-probe/detour-src -c Release --no-self-contained -p:UseAppHost=false -o "$PWD/native-probe/detour"
     cp "$core" native-probe/detour/MonoMod.Core.dll
+    mkdir -p native-probe/patch-src
+    cat > native-probe/patch-src/patch.csproj <<'XML'
+<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net9.0</TargetFramework></PropertyGroup><ItemGroup><PackageReference Include="Mono.Cecil" Version="0.11.6" /></ItemGroup></Project>
+XML
+    cp scripts/probe-native-servers-patch.cs native-probe/patch-src/Program.cs
+    dotnet run --project native-probe/patch-src -c Release -- native-probe/tmodloader-patched/tModLoader.dll
 else
     result=1
 fi

@@ -79,7 +79,7 @@ pacman -Syu
 | `toot` | [Mastodon CLI and terminal interface](packages/toot/README.md). |
 | `cjson` | JSON library used by WeeChat; see the [upstream documentation](https://github.com/DaveGamble/cJSON). |
 | `terraria-server` | [Official vanilla Terraria downloader and native Mono launcher](packages/terraria-server/README.md). |
-| `pumpkin-server` | [Native Android Pumpkin Minecraft server](packages/pumpkin-server/README.md). |
+| `pumpkin-server` | [Upstream downloader and launcher for native Android Pumpkin](packages/pumpkin-server/README.md). |
 
 Extra CLI recipes are preserved under `candidates/` pending the owner's final
 selection. They are not in the build or publication manifest.

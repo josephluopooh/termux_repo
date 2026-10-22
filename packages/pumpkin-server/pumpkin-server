@@ -1,0 +1,57 @@
+#!/data/data/com.termux/files/usr/bin/python
+"""Obtain the upstream mixed-license Android payload only on explicit setup."""
+import hashlib
+import os
+from pathlib import Path
+import platform
+import shutil
+import sys
+import tempfile
+import urllib.request
+
+RELEASE = '0.2.0+26.3-26.51'
+URL = 'https://github.com/Pumpkin-MC/Pumpkin/releases/download/0.2.0%2B26.3-26.51/pumpkin-aarch64-android'
+SHA256 = '95d24e2f79376574f737419cfe60ec8c73712e7bcc69eefb8a4cb6ef4e9c9e2a'
+base = Path(os.environ.get('XDG_DATA_HOME', Path.home() / '.local/share')) / 'pumpkin-server'
+binary = base / RELEASE / 'pumpkin'
+args = sys.argv[1:]
+if Path(sys.argv[0]).name == 'pumpkin':
+    args = ['run', *args]
+
+if not args or args[0] in ('--help', '-h'):
+    print('pumpkin-server install  Download the pinned native Android server from upstream.\n'
+          'pumpkin [arguments...]  Start in the current directory.\n'
+          'pumpkin-server path  Show the downloaded executable path.\n'
+          'No download, server startup, or license acceptance occurs during Pacman install.')
+elif args == ['--version']:
+    print('Pumpkin launcher for upstream release', RELEASE)
+elif args == ['path']:
+    print(binary)
+elif args == ['install']:
+    if platform.machine() not in ('aarch64', 'arm64'):
+        raise SystemExit('This pinned upstream payload requires aarch64 Android/Termux.')
+    if binary.is_file():
+        with binary.open('rb') as source:
+            if hashlib.file_digest(source, 'sha256').hexdigest() == SHA256:
+                print('Already installed:', binary)
+                raise SystemExit(0)
+        raise SystemExit('Existing payload differs from the pinned checksum; inspect it before replacing: ' + str(binary))
+    binary.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix='.download-', dir=binary.parent) as temporary:
+        staged = Path(temporary) / 'pumpkin'
+        print('Downloading upstream native Android Pumpkin:', URL, flush=True)
+        request = urllib.request.Request(URL, headers={'User-Agent': 'termux_repo/1.0 (Pumpkin server installer)'})
+        with urllib.request.urlopen(request, timeout=120) as response, staged.open('wb') as target:
+            shutil.copyfileobj(response, target)
+        with staged.open('rb') as source:
+            if hashlib.file_digest(source, 'sha256').hexdigest() != SHA256:
+                raise SystemExit('Upstream checksum mismatch; nothing installed.')
+        staged.chmod(0o700)
+        staged.rename(binary)
+    print('Installed:', binary)
+elif args[0] == 'run':
+    if not binary.is_file():
+        raise SystemExit('Run pumpkin-server install first.')
+    os.execv(binary, [str(binary), *args[1:]])
+else:
+    raise SystemExit('Unknown command; see pumpkin-server --help.')

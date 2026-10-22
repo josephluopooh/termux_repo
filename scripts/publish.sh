@@ -3,7 +3,15 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 : "${GITHUB_REPOSITORY:?}" "${GITHUB_SHA:?}" "${GITHUB_RUN_ID:?}" "${GITHUB_RUN_ATTEMPT:?}"
 current_head=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)
-[[ $current_head == "$GITHUB_SHA" ]] || { echo 'Refusing to publish a superseded package selection'; exit 1; }
+if [[ $current_head != "$GITHUB_SHA" ]]; then
+    # Diagnostic-only edits do not change packages, selection, build or runtime checks.
+    # Any other changed path still blocks publication of a superseded snapshot.
+    changed=$(gh api "repos/$GITHUB_REPOSITORY/compare/$GITHUB_SHA...$current_head" --jq '.files[].filename')
+    if printf '%s\n' "$changed" | grep -Ev '^(scripts/probe-native-servers[^/]*|\.github/workflows/native-server-probes\.yml|docs/native-server-compatibility\.md)$'; then
+        echo 'Refusing to publish a superseded package selection or implementation'
+        exit 1
+    fi
+fi
 tag="repo-aarch64-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
 signed=false
 export GNUPGHOME

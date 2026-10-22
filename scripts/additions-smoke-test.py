@@ -189,6 +189,12 @@ with tempfile.TemporaryDirectory(prefix='termux-additions-') as temporary:
     print('PASS: official vanilla native Mono world creation, protocol reply, save and reload', flush=True)
 
     pumpkin = work / 'pumpkin'; pumpkin.mkdir()
+    run(['pumpkin-server', 'install'], timeout=300)
+    binary = subprocess.check_output(['pumpkin-server', 'path'], text=True).strip()
+    abi = subprocess.check_output(['readelf', '-h', '-l', '-d', binary], text=True)
+    assert 'AArch64' in abi and '/system/bin/linker64' in abi
+    assert 'libc.so.6' not in abi and 'ld-linux' not in abi
+    print(abi, flush=True)
     (pumpkin / 'pumpkin.toml').write_text('''allow_nether = false
 allow_end = false
 [networking.java]

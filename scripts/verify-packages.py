@@ -44,11 +44,12 @@ for archive in sorted(folder.glob('*.pkg.tar.xz')):
                     out = folder / 'evidence' / 'elf' / name
                     out.mkdir(parents=True, exist_ok=True)
                     (out / (member.name.replace('/', '_') + '.txt')).write_text(abi)
-        if name in ('terraria-server', 'tshock'):
+        if name in ('terraria-server', 'pumpkin-server'):
             assert arch == 'any' and '.INSTALL' not in tar.getnames()
             assert not any(m.name.endswith(('.exe', '.dll', '.so')) for m in tar.getmembers())
         if name == 'pumpkin-server':
-            assert tar.getmember('data/data/com.termux/files/usr/bin/pumpkin').mode & 0o100
+            assert tar.getmember('data/data/com.termux/files/usr/bin/pumpkin-server').mode & 0o100
+            assert tar.getmember('data/data/com.termux/files/usr/bin/pumpkin').linkname == 'pumpkin-server'
         if name == 'weechat-cjson':
             assert 'cjson' in info['depend']
             assert 'weechat' in info['conflict']

@@ -32,10 +32,12 @@ elif sys.argv[1:] == ['install']:
     with tempfile.TemporaryDirectory(prefix='.download-', dir=base) as temporary:
         archive = Path(temporary) / 'server.zip'
         print('Downloading the official server directly from Re-Logic:', URL, flush=True)
-        with urllib.request.urlopen(URL, timeout=120) as source, archive.open('wb') as target:
+        request = urllib.request.Request(URL, headers={'User-Agent': 'termux_repo/1.0 (Terraria server installer)'})
+        with urllib.request.urlopen(request, timeout=120) as source, archive.open('wb') as target:
             shutil.copyfileobj(source, target)
-        if hashlib.file_digest(archive.open('rb'), 'sha256').hexdigest() != SHA256:
-            raise SystemExit('Official archive checksum mismatch; nothing installed.')
+        with archive.open('rb') as source:
+            if hashlib.file_digest(source, 'sha256').hexdigest() != SHA256:
+                raise SystemExit('Official archive checksum mismatch; nothing installed.')
         staged = Path(temporary) / 'server'
         staged.mkdir()
         with zipfile.ZipFile(archive) as bundle:

@@ -2,6 +2,10 @@ name: Build and publish Pacman repository
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'scripts/probe-native-servers*'
+      - '.github/workflows/native-server-probes.yml'
+      - 'docs/native-server-compatibility.md'
   pull_request:
   workflow_dispatch:
 permissions:
@@ -64,6 +68,25 @@ jobs:
         with:
           name: runtime-evidence-aarch64
           path: runtime-test.log
+  remove-superseded-payload-artifacts:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: write
+    steps:
+      - name: Remove only this task's superseded mixed-license server payload artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          for run in 39815791199 39816962811 39818802131; do
+            ids=$(gh api "repos/$GH_REPO/actions/runs/$run/artifacts" --jq '.artifacts[] | select(.name == "packages-aarch64-servers") | .id')
+            for id in $ids; do
+              gh api --method DELETE "repos/$GH_REPO/actions/artifacts/$id"
+            done
+          done
   publish:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: [build, runtime]

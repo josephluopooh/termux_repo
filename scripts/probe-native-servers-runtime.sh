@@ -4,9 +4,17 @@ server=$1
 case "$server" in
     tshock) runtime=dotnet-runtime-9.0 ;;
     tmodloader|tmodloader-patched) runtime=dotnet-runtime-8.0 ;;
+    vanilla-pumpkin) runtime=mono ;;
     *) exit 2 ;;
 esac
 pacman -Syu --noconfirm "$runtime" python libsqlite ca-certificates
+if [[ $server == vanilla-pumpkin ]]; then
+    pacman -S --noconfirm mono-libs binutils libc++
+    install -m700 /recipes/terraria-server/terraria-server "$PREFIX/bin/terraria-server"
+    install -m700 /recipes/pumpkin-server/pumpkin-server "$PREFIX/bin/pumpkin-server"
+    ln -s pumpkin-server "$PREFIX/bin/pumpkin"
+    exec python /tests/additions-smoke-test.py
+fi
 pacman -Q "$runtime" dotnet-host libsqlite
 dotnet --info
 printf 'Android build.prop present: '; test -f /system/build.prop && echo yes || echo no
@@ -15,7 +23,8 @@ trap 'rm -rf "$work"' EXIT
 cp -r "/input/$server/." "$work/"
 cd "$work"
 if [[ $server == tmodloader-patched ]]; then
-    pacman -S --noconfirm clang
+    pacman -S --noconfirm clang sdl2
+    ln -sf "$PREFIX/lib/libSDL2.so" "$work/Libraries/Native/Linux-arm64/libSDL2-2.0.so"
     clang -shared -fPIC /tests/probe-native-servers-cache.c -o "$work/libmonomod-bionic.so"
     # Application-local helper. No replacement of system libraries or OS spoofing.
     export LD_LIBRARY_PATH="$work${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
