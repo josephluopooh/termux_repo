@@ -1,0 +1,41 @@
+name: Native Android server compatibility probes
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/native-server-probes.yml'
+      - 'scripts/probe-native-servers*'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Build managed TShock and obtain official tModLoader
+        run: bash scripts/probe-native-servers-prepare.sh
+      - name: Probe native Termux runtimes (no proot, no glibc)
+        if: always()
+        run: |
+          set -uo pipefail
+          mkdir -p probe-evidence
+          result=0
+          for server in tshock tmodloader; do
+            docker run --rm --user 1000:1000 \
+              -v "$PWD/native-probe:/input:ro" -v "$PWD/scripts:/tests:ro" \
+              --entrypoint /data/data/com.termux/files/usr/bin/bash \
+              termux/termux-docker-pacman@sha256:489fa5abfae9244b1c5229cdff6b77007846d7ab7a028768ce1c92967c7999e4 \
+              /tests/probe-native-servers-runtime.sh "$server" 2>&1 | tee "probe-evidence/$server.log" || result=1
+          done
+          exit "$result"
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        if: always()
+        with:
+          name: native-server-probe-evidence
+          path: probe-evidence/
+          if-no-files-found: warn
+          retention-days: 14

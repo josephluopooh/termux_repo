@@ -4,14 +4,6 @@
     "weechat-cjson",
     "toot",
     "pumpkin-server",
-    "terraria-server",
-    "chisel",
-    "ergo",
-    "rainfrog",
-    "rustypaste",
-    "presenterm",
-    "termscp",
-    "rathole",
-    "lazyjj"
+    "terraria-server"
   ]
 }

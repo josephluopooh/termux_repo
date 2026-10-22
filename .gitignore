@@ -3,3 +3,5 @@
 /previous/
 __pycache__/
 *.pyc
+/native-probe/
+/probe-evidence/

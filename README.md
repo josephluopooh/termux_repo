@@ -4,9 +4,9 @@ A general-purpose **Pacman repository for Termux**, built by GitHub Actions and
 hosted as complete, signed GitHub Release snapshots.
 
 [Releases](https://github.com/josephluopooh/termux_repo/releases)
-· [Builds](https://github.com/josephluopooh/termux_repo/actions/workflows/repository.yml)
-· [Build and contribution guide](docs/building.md)
-· [Maintainer signing guide](docs/signing.md)
+路 [Builds](https://github.com/josephluopooh/termux_repo/actions/workflows/repository.yml)
+路 [Build and contribution guide](docs/building.md)
+路 [Maintainer signing guide](docs/signing.md)
 
 ## Compatibility
 
@@ -80,14 +80,9 @@ pacman -Syu
 | `cjson` | JSON library used by WeeChat; see the [upstream documentation](https://github.com/DaveGamble/cJSON). |
 | `terraria-server` | [Official vanilla Terraria downloader and native Mono launcher](packages/terraria-server/README.md). |
 | `pumpkin-server` | [Native Android Pumpkin Minecraft server](packages/pumpkin-server/README.md). |
-| `rainfrog` | [SQLite/PostgreSQL/MySQL terminal interface](packages/rainfrog/README.md). |
-| `chisel` | [Authenticated network tunnels over HTTP](packages/chisel/README.md). |
-| `rustypaste` | [Self-hosted paste and file upload service](packages/rustypaste/README.md). |
-| `presenterm` | [Markdown presentations in the terminal](packages/presenterm/README.md). |
-| `ergo` | [IRC server with integrated bouncer features](packages/ergo/README.md). |
-| `termscp` | [Terminal remote file manager](packages/termscp/README.md). |
-| `rathole` | [NAT traversal and reverse tunnels](packages/rathole/README.md). |
-| `lazyjj` | [Terminal interface for Jujutsu](packages/lazyjj/README.md). |
+
+Extra CLI recipes are preserved under `candidates/` pending the owner's final
+selection. They are not in the build or publication manifest.
 
 See [releases](https://github.com/josephluopooh/termux_repo/releases) for published
 versions and [packages.json](packages.json) for the selected package manifest.

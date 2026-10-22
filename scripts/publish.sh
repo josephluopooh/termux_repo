@@ -2,6 +2,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 : "${GITHUB_REPOSITORY:?}" "${GITHUB_SHA:?}" "${GITHUB_RUN_ID:?}" "${GITHUB_RUN_ATTEMPT:?}"
+current_head=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)
+[[ $current_head == "$GITHUB_SHA" ]] || { echo 'Refusing to publish a superseded package selection'; exit 1; }
 tag="repo-aarch64-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
 signed=false
 export GNUPGHOME
