@@ -20,10 +20,13 @@ out = Path(destination)
 out.mkdir(parents=True, exist_ok=True)
 raw = Path(source).read_text()
 modules = {}
+source_urls = {}
 if kind == 'cargo':
     for package in json.loads(raw)['packages']:
         if package['source'] is not None:
             modules[package['id']] = (package['name'] + '-' + package['version'], Path(package['manifest_path']).parent, package.get('license'), package.get('license_file'))
+            source_urls[package['id']] = (f"https://crates.io/api/v1/crates/{package['name']}/{package['version']}/download"
+                if package['source'].startswith('registry+') else package['source'])
 elif kind == 'go':
     decoder = json.JSONDecoder()
     while raw.strip():
@@ -82,6 +85,14 @@ for identity, (label, directory, license_id, license_file) in sorted(modules.ite
                 fetched.append({'url': url, 'sha256': hashlib.sha256(content).hexdigest()})
     if not copied:
         raise SystemExit('No license/notice found for ' + identity)
-    manifest.append({'dependency': identity, 'license': license_id, 'directory': safe, 'files': copied, 'upstream_notices': fetched})
+    # Include exact Cargo-verified source for MPL-only dependencies, alongside
+    # their license, so recipients can obtain it directly with the executable.
+    bundled_source = None
+    if kind == 'cargo' and license_id and 'MPL-2.0' in license_id and ' OR ' not in license_id:
+        shutil.copytree(directory, out / safe / 'source', ignore=shutil.ignore_patterns('.cargo-ok'))
+        bundled_source = 'source'
+    manifest.append({'dependency': identity, 'license': license_id, 'directory': safe, 'files': copied,
+                     'source_url': source_urls.get(identity), 'bundled_source': bundled_source,
+                     'upstream_notices': fetched})
 (out / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
 print('Preserved notices for', len(manifest), 'dependencies')

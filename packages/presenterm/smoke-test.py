@@ -6,7 +6,6 @@ from pathlib import Path
 import pty
 import re
 import select
-import sqlite3
 import struct
 import subprocess
 import tempfile
@@ -16,6 +15,7 @@ import time
 with tempfile.TemporaryDirectory(prefix='presenterm-smoke-') as directory:
     work = Path(directory)
     env = dict(os.environ, TERM='xterm-256color', COLORTERM='truecolor')
+    env.pop('TERM_PROGRAM', None)  # This PTY is not inside tmux.
     for variable, name in [('HOME', 'home'), ('XDG_CONFIG_HOME', 'config'), ('XDG_DATA_HOME', 'data'), ('XDG_CACHE_HOME', 'cache')]:
         path = work / name
         path.mkdir()
@@ -29,6 +29,7 @@ with tempfile.TemporaryDirectory(prefix='presenterm-smoke-') as directory:
     process = subprocess.Popen(args, cwd=work, env=env, stdin=slave, stdout=slave, stderr=slave, start_new_session=True)
     os.close(slave)
     output = b''
+    queries = b''
     found = False
     try:
         deadline = time.monotonic() + 40
@@ -41,9 +42,18 @@ with tempfile.TemporaryDirectory(prefix='presenterm-smoke-') as directory:
                 if not chunk:
                     break
                 output += chunk
-                # Answer the terminal cursor query used by crossterm.
-                if b'\x1b[6n' in chunk:
-                    os.write(master, b'\x1b[1;1R')
+                # Behave like a basic text terminal: no Kitty/sixel/font-size
+                # extensions. Presenterm queries primary device attributes and
+                # DSR before rendering; crossterm also asks for cursor position.
+                # Buffer partial queries because PTY reads may split an escape.
+                queries += chunk
+                while match := re.search(rb'\x1b\[(?:0?c|5n|6n)', queries):
+                    query = match.group()
+                    reply = {b'\x1b[c': b'\x1b[?1;2c', b'\x1b[0c': b'\x1b[?1;2c',
+                             b'\x1b[5n': b'\x1b[0n', b'\x1b[6n': b'\x1b[1;1R'}[query]
+                    os.write(master, reply)
+                    queries = queries[match.end():]
+                queries = queries[-32:]
                 clean = re.sub(rb'\x1b\[[0-?]*[ -/]*[@-~]', b'', output)
                 if expected.encode() in clean:
                     found = True

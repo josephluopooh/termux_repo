@@ -80,9 +80,16 @@ pacman -Syu
 | `cjson` | JSON library used by WeeChat; see the [upstream documentation](https://github.com/DaveGamble/cJSON). |
 | `terraria-server` | [Official vanilla Terraria downloader and native Mono launcher](packages/terraria-server/README.md). |
 | `pumpkin-server` | [Upstream downloader and launcher for native Android Pumpkin](packages/pumpkin-server/README.md). |
+| `chisel` | [Authenticated TCP/UDP tunnels over HTTP](packages/chisel/README.md). |
+| `ntfy` | [Notification CLI and HTTP API server; browser UI excluded](packages/ntfy/README.md). |
+| `copyparty` | [File server with its browser interface](packages/copyparty/README.md). |
+| `rainfrog` | [Database terminal interface](packages/rainfrog/README.md). |
+| `presenterm` | [Markdown slides in the terminal](packages/presenterm/README.md). |
 
-Extra CLI recipes are preserved under `candidates/` pending the owner's final
-selection. They are not in the build or publication manifest.
+The owner selected these five additional applications. Other shortlist recipes
+remain inactive under `candidates/`. TShock, tModLoader and Valheim are also
+requested; their [compatibility checks](docs/native-server-compatibility.md)
+remain separate from the packages eligible for publication.
 
 See [releases](https://github.com/josephluopooh/termux_repo/releases) for published
 versions and [packages.json](packages.json) for the selected package manifest.

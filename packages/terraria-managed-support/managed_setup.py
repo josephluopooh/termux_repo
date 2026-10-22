@@ -155,7 +155,8 @@ def main(kind):
     if args[0] != 'run': raise ValueError('Unknown command; see --help')
     if not (installed / '.complete.json').is_file(): raise RuntimeError(f'Run {kind}-server install first')
     state = base / 'state'; state.mkdir(exist_ok=True)
-    (state / 'worlds').mkdir(exist_ok=True)
+    worlds = state / ('Worlds' if kind == 'tmodloader' else 'worlds')
+    worlds.mkdir(exist_ok=True)
     if kind == 'tshock':
         plugins = state / 'ServerPlugins'; plugins.mkdir(exist_ok=True)
         for item in (installed / 'ServerPlugins').iterdir():
@@ -171,7 +172,7 @@ def main(kind):
     # shadow the user's world/config argument, or create a different test world.
     defaults = {'-tmlsavedirectory' if kind == 'tmodloader' else '-savedirectory': str(state)}
     if '-config' not in supplied:
-        defaults.update({'-world': str(state / 'worlds/world.wld'), '-worldname': 'world', '-autocreate': '1'})
+        defaults.update({'-world': str(worlds / 'world.wld'), '-worldname': 'world', '-autocreate': '1'})
     for option, value in defaults.items():
         if option not in supplied:
             command += [option, value]
