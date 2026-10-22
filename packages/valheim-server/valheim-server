@@ -1,0 +1,371 @@
+#!/data/data/com.termux/files/usr/bin/python
+"""Own launcher only. Download official Steam payload on explicit user request."""
+import argparse
+from contextlib import contextmanager
+from datetime import datetime, timezone
+import getpass
+import hashlib
+import json
+import os
+from pathlib import Path, PurePosixPath
+import platform
+import re
+import secrets
+import shutil
+import signal
+import stat
+import struct
+import subprocess
+import sys
+import tempfile
+import urllib.request
+import zipfile
+
+VERSION = '0.1.0'
+PREFIX = Path('/data/data/com.termux/files/usr')
+DD_VERSION = '3.4.0'
+DD_URL = ('https://github.com/SteamRE/DepotDownloader/releases/download/'
+          'DepotDownloader_3.4.0/DepotDownloader-framework.zip')
+DD_SHA256 = '7419f65efb7eb16b6e56987ed1b76475f29c02475c0016166c84798388e796bc'
+EULA = 'https://www.valheimgame.com/eula/'
+STEAM_TERMS = 'https://store.steampowered.com/subscriber_agreement/'
+GPACKAGES = ('box64-glibc', 'glibc', 'gcc-libs-glibc', 'libpulse-glibc', 'libogg-glibc')
+INSTALL = 'pacman -Syu valheim-server ' + ' '.join(GPACKAGES)
+
+
+class Error(Exception):
+    pass
+
+
+class Paths:
+    def __init__(self):
+        self.data = Path(os.environ.get('XDG_DATA_HOME', Path.home() / '.local/share')) / 'valheim-server'
+        self.config = Path(os.environ.get('XDG_CONFIG_HOME', Path.home() / '.config')) / 'valheim-server/config.json'
+        if not self.data.is_absolute() or not self.config.is_absolute():
+            raise Error('XDG_DATA_HOME and XDG_CONFIG_HOME must be absolute paths.')
+        self.current = self.data / 'current.json'
+        self.worlds = self.data / 'worlds'
+        self.logs = self.data / 'logs'
+
+
+def write_json(path, value):
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    fd, name = tempfile.mkstemp(prefix='.write-', dir=path.parent)
+    try:
+        with os.fdopen(fd, 'w', encoding='utf-8') as stream:
+            json.dump(value, stream, indent=2)
+            stream.write('\n')
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(name, path)
+    finally:
+        if os.path.exists(name):
+            os.unlink(name)
+
+
+def load_json(path):
+    try:
+        return json.loads(path.read_text(encoding='utf-8'))
+    except (OSError, ValueError) as exc:
+        raise Error(f'Cannot read {path}: {exc}') from exc
+
+
+@contextmanager
+def locked(paths):
+    # flock is released automatically after crashes; do not delete the lock file.
+    import fcntl
+    paths.data.mkdir(parents=True, exist_ok=True, mode=0o700)
+    with (paths.data / '.lock').open('a') as stream:
+        try:
+            fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise Error('Another setup/update/start is active. Stop it before retrying.') from exc
+        yield
+
+
+def check_platform():
+    if platform.system() != 'Linux' or platform.machine() not in ('aarch64', 'arm64'):
+        raise Error('This draft requires aarch64 Termux-Pacman on Android; host execution is unsupported.')
+    if os.environ.get('PREFIX', str(PREFIX)) != str(PREFIX) or not PREFIX.is_dir():
+        raise Error(f'This package requires the standard Termux prefix {PREFIX}.')
+
+
+def require_runtime():
+    check_platform()
+    pacman = PREFIX / 'bin/pacman'
+    if not pacman.is_file():
+        raise Error('Termux-Pacman is required. This is not an APT package.')
+    result = subprocess.run([str(pacman), '-Q', *GPACKAGES, 'dotnet-runtime-9.0'],
+                            text=True, capture_output=True)
+    if result.returncode:
+        raise Error('Missing runtime package(s):\n' + result.stderr.strip() +
+                    '\nEnable the signed [gpkg] repository as documented, then run:\n' + INSTALL)
+    versions = subprocess.run([str(pacman), '-T', 'box64-glibc>=0.4.4', 'glibc>=2.29'],
+                              text=True, capture_output=True)
+    if versions.returncode:
+        raise Error('Runtime version requirements are unsatisfied:\n' + versions.stdout.strip() +
+                    '\nUse a full upgrade: ' + INSTALL)
+    required = [PREFIX / 'bin/dotnet', PREFIX / 'glibc/bin/box64',
+                PREFIX / 'glibc/lib/ld.so']
+    required += [PREFIX / 'glibc/lib' / n for n in
+                 ('libatomic.so.1', 'libstdc++.so.6', 'libpulse.so.0', 'libogg.so.0')]
+    missing = [str(p) for p in required if not p.is_file()]
+    if missing:
+        raise Error('Runtime files are missing; use a full pacman upgrade:\n' + '\n'.join(missing))
+    return result.stdout.strip()
+
+
+def download_notice():
+    print('Setup/update downloads proprietary Valheim server files from Steam.\n'
+          f'Valheim terms: {EULA}\n'
+          f'Steam terms: {STEAM_TERMS}')
+
+
+def download_verified(url, dest, expected):
+    req = urllib.request.Request(url, headers={'User-Agent': 'termux-valheim-server/' + VERSION})
+    digest = hashlib.sha256()
+    with urllib.request.urlopen(req, timeout=120) as source, dest.open('wb') as target:
+        while chunk := source.read(1024 * 1024):
+            target.write(chunk)
+            digest.update(chunk)
+    if digest.hexdigest() != expected:
+        raise Error('DepotDownloader checksum mismatch. Nothing activated; retry after maintainer review.')
+
+
+def extract_downloader(archive, dest):
+    with zipfile.ZipFile(archive) as z:
+        if sum(i.file_size for i in z.infolist()) > 64 * 1024 * 1024:
+            raise Error('Unexpectedly large DepotDownloader archive.')
+        for item in z.infolist():
+            p = PurePosixPath(item.filename)
+            if (p.is_absolute() or '..' in p.parts or '\\' in item.filename or ':' in item.filename
+                    or stat.S_ISLNK(item.external_attr >> 16)):
+                raise Error('Unsafe DepotDownloader archive path: ' + item.filename)
+            target = dest.joinpath(*p.parts)
+            if item.is_dir():
+                target.mkdir(parents=True, exist_ok=True)
+            else:
+                target.parent.mkdir(parents=True, exist_ok=True)
+                with z.open(item) as source, target.open('xb') as out:
+                    shutil.copyfileobj(source, out)
+    runtime = load_json(dest / 'DepotDownloader.runtimeconfig.json')
+    if runtime.get('runtimeOptions', {}).get('tfm') != 'net9.0':
+        raise Error('Unexpected downloader framework; maintainer review required.')
+
+
+def downloader(paths):
+    # Revalidate the pinned archive on every use, not just a success marker.
+    archive = paths.data / ('DepotDownloader-' + DD_VERSION + '.zip')
+    if not archive.is_file() or hashlib.sha256(archive.read_bytes()).hexdigest() != DD_SHA256:
+        part = archive.with_suffix('.download')
+        try:
+            download_verified(DD_URL, part, DD_SHA256)
+            os.replace(part, archive)
+        finally:
+            part.unlink(missing_ok=True)
+    return archive
+
+
+def check_payload(folder):
+    for name in ('valheim_server.x86_64', 'UnityPlayer.so'):
+        p = folder / name
+        if not p.is_file() or p.is_symlink():
+            raise Error(f'Download incomplete: missing regular file {name}. Current installation preserved.')
+        with p.open('rb') as f:
+            header = f.read(20)
+        if len(header) != 20 or header[:6] != b'\x7fELF\x02\x01' or struct.unpack_from('<H', header, 18)[0] != 62:
+            raise Error(f'{name} is not the expected Linux x86_64 ELF payload.')
+    if not (folder / 'valheim_server_Data').is_dir():
+        raise Error('Download incomplete: valheim_server_Data is missing.')
+
+
+def active(paths):
+    if not paths.current.exists():
+        raise Error('No server is installed. Run valheim-server setup first.')
+    state = load_json(paths.current)
+    if not isinstance(state, dict):
+        raise Error('Invalid current.json; expected a generation record.')
+    generation = state.get('generation', '')
+    if not re.fullmatch(r'gen-[0-9a-f]{16}', generation):
+        raise Error('Invalid generation in current.json; inspect it before proceeding.')
+    folder = paths.data / generation
+    if folder.is_symlink():
+        raise Error('The active generation must not be a symlink.')
+    check_payload(folder)
+    return folder
+
+
+def configure(paths):
+    if paths.config.exists():
+        return
+    if not sys.stdin.isatty():
+        raise Error('Run setup in a terminal to create the private server configuration.')
+    name = input('Server name [Termux Valheim]: ').strip() or 'Termux Valheim'
+    world = input('World name [Dedicated]: ').strip() or 'Dedicated'
+    password = getpass.getpass('Server password (at least 5 characters): ')
+    config = dict(name=name, world=world, password=password, port=2456, public=False, crossplay=False)
+    validate_config(config)
+    write_json(paths.config, config)
+
+
+def validate_config(config):
+    if not isinstance(config, dict) or set(config) != {'name', 'world', 'password', 'port', 'public', 'crossplay'}:
+        raise Error('Config must contain exactly name, world, password, port, public, crossplay.')
+    for key in ('name', 'world', 'password'):
+        v = config[key]
+        if not isinstance(v, str) or not v or len(v) > 128 or any(ord(c) < 32 for c in v):
+            raise Error(f'Invalid config field {key}: use 1-128 printable characters.')
+    if '/' in config['world'] or '\\' in config['world'] or config['world'] in ('.', '..'):
+        raise Error('World must be a name, not a path.')
+    if len(config['password']) < 5 or config['password'] in (config['name'], config['world']):
+        raise Error('Use a password of at least 5 characters different from the server/world name.')
+    if type(config['port']) is not int or not 1024 <= config['port'] <= 65534:
+        raise Error('Port must be an integer from 1024 through 65534 (Valheim also uses port+1).')
+    if type(config['public']) is not bool or type(config['crossplay']) is not bool:
+        raise Error('public and crossplay must be JSON booleans.')
+    if config['crossplay']:
+        raise Error('Crossplay is disabled in this draft: upstream Box64 issue #4403 is unresolved. Use false.')
+    return config
+
+
+def native_environment():
+    env = os.environ.copy()
+    # Clear inherited glibc environments when invoking native Android .NET.
+    for key in ('LD_PRELOAD', 'LD_LIBRARY_PATH', 'DOTNET_ROOT', 'DOTNET_ROOT_ARM64'):
+        env.pop(key, None)
+    env['PATH'] = str(PREFIX / 'bin') + ':' + env.get('PATH', '')
+    return env
+
+
+def setup(paths, update=False):
+    require_runtime()
+    with locked(paths):
+        if paths.current.exists() and not update:
+            active(paths)
+            configure(paths)
+            print('Already installed. Use valheim-server start, or update to fetch a new Steam build.')
+            return
+        configure(paths)
+        download_notice()
+        archive = downloader(paths)
+        generation = 'gen-' + secrets.token_hex(8)
+        with tempfile.TemporaryDirectory(prefix='.stage-', dir=paths.data) as temp:
+            temp = Path(temp)
+            dd = temp / 'downloader'
+            extract_downloader(archive, dd)
+            payload = temp / 'server'
+            payload.mkdir()
+            command = [str(PREFIX / 'bin/dotnet'), str(dd / 'DepotDownloader.dll'),
+                       '-app', '896660', '-os', 'linux', '-osarch', '64',
+                       '-dir', str(payload), '-validate']
+            print('Downloading the current public Linux server from Steam anonymously. This may take time.', flush=True)
+            # No username/password/remember-password, SteamCMD, or legal-agreement bypass.
+            completed = subprocess.run(command, env=native_environment(), cwd=dd)
+            if completed.returncode:
+                raise Error(f'DepotDownloader exited {completed.returncode}. No new payload activated. '
+                            'Check its network/runtime output above; no Steam password is required.')
+            check_payload(payload)
+            (payload / 'valheim_server.x86_64').chmod(0o700)
+            record = {'app': 896660, 'branch': 'public', 'os': 'linux', 'architecture': '64',
+                      'downloaded_at': datetime.now(timezone.utc).isoformat(),
+                      'downloader_version': DD_VERSION, 'downloader_sha256': DD_SHA256,
+                      'generation': generation,
+                      'previous_generation': load_json(paths.current)['generation'] if paths.current.exists() else None}
+            # Steam manifests remain in the generation's .DepotDownloader directory.
+            write_json(payload / 'termux-install.json', record)
+            os.replace(payload, paths.data / generation)
+            write_json(paths.current, record)
+        print(f'Download installed (startup still requires validation). Config: {paths.config}\n'
+              f'Worlds: {paths.worlds}\nStart: valheim-server start')
+
+
+def launch_command(paths, folder, config, logfile):
+    env = native_environment()
+    glibc = PREFIX / 'glibc'
+    env['LD_LIBRARY_PATH'] = str(glibc / 'lib')
+    env['BOX64_LD_LIBRARY_PATH'] = ':'.join(map(str, [folder / 'linux64', folder,
+                                                    glibc / 'lib/box64-x86_64-linux-gnu']))
+    env['SteamAppId'] = '892970'
+    env['BOX64_NOBANNER'] = '0'
+    # Invoke the official glibc loader directly, using argv (grun 2.0 uses unquoted
+    # $@ in its binary path, which splits server names, passwords, and save paths).
+    command = [str(glibc / 'lib/ld.so'), '--library-path', str(glibc / 'lib'),
+               str(glibc / 'bin/box64'), str(folder / 'valheim_server.x86_64'),
+               '-nographics', '-batchmode', '-name', config['name'], '-world', config['world'],
+               '-password', config['password'], '-port', str(config['port']),
+               '-public', '1' if config['public'] else '0',
+               '-savedir', str(paths.worlds), '-logFile', str(logfile)]
+    return command, env
+
+
+def supervise(command, env, cwd):
+    # Separate process group prevents the terminal and this handler both sending
+    # Ctrl+C to Unity. The supervisor forwards each requested signal once.
+    child = subprocess.Popen(command, env=env, cwd=cwd, start_new_session=True)
+    # Keep the operation lock in this supervisor until the server exits.
+    previous = {}
+    def forward(signum, _frame):
+        if child.poll() is None:
+            child.send_signal(signum)
+    try:
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            previous[sig] = signal.signal(sig, forward)
+        return child.wait()
+    finally:
+        for sig, handler in previous.items():
+            signal.signal(sig, handler)
+
+
+def start(paths):
+    require_runtime()
+    with locked(paths):
+        folder = active(paths)
+        config = validate_config(load_json(paths.config))
+        paths.worlds.mkdir(parents=True, exist_ok=True, mode=0o700)
+        paths.logs.mkdir(parents=True, exist_ok=True, mode=0o700)
+        logfile = paths.logs / (datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S') + '.log')
+        command, env = launch_command(paths, folder, config, logfile)
+        print(f'Experimental Box64 server. Ctrl+C saves/stops. Log: {logfile}\n'
+              'public=false hides the listing; it does not bind to loopback or block LAN access.', flush=True)
+        result = supervise(command, env, folder)
+        if result:
+            raise Error(f'Server exited {result}. Inspect {logfile} and the Box64 output. '
+                        'Missing SDL3/native libraries or Unity compatibility need review; do not install random binaries.')
+
+
+def doctor(paths):
+    print(require_runtime())
+    if paths.current.exists():
+        print('Payload:', active(paths))
+    else:
+        print('Payload not installed. Run valheim-server setup.')
+    print('Config:', paths.config, '\nWorlds:', paths.worlds)
+    print('Package/file checks only; this does not prove Unity startup or client connectivity.\n'
+          'SDL3 is absent from the audited [gpkg] index; a future payload may need additional compatible libraries.\n'
+          'Crossplay disabled: https://github.com/ptitSeb/box64/issues/4403')
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description='Experimental no-proot Valheim server for aarch64 Termux-Pacman.')
+    parser.add_argument('--version', action='version', version=VERSION)
+    parser.add_argument('command', choices=('setup', 'update', 'start', 'doctor', 'paths'))
+    args = parser.parse_args(argv)
+    os.umask(0o077)
+    paths = Paths()
+    if args.command == 'paths':
+        print(f'Config: {paths.config}\nData: {paths.data}\nWorlds: {paths.worlds}\nLogs: {paths.logs}')
+    elif args.command == 'setup': setup(paths)
+    elif args.command == 'update': setup(paths, update=True)
+    elif args.command == 'start': start(paths)
+    else: doctor(paths)
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except (Error, OSError, ValueError, zipfile.BadZipFile) as exc:
+        print('valheim-server: ' + str(exc), file=sys.stderr)
+        sys.exit(1)
+    except KeyboardInterrupt:
+        print('\nvalheim-server: interrupted; active payload and worlds preserved.', file=sys.stderr)
+        sys.exit(130)

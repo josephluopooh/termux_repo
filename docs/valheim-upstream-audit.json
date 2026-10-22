@@ -1,0 +1,109 @@
+{
+  "audited_at_utc": "2026-10-22T17:10:20.631801+00:00",
+  "key_fingerprint": "998DE27318E867EA976BA877389CEED64573DFCA",
+  "pinned_key_source": "termux-pacman/termux-packages@7aae0e26de979162d09de28b05aaf3dd78592314:packages/termux-keyring/termux-pacman.gpg",
+  "databases": {
+    "main.db": {
+      "sha256": "3f28e8981b255153b7fee8a7f2a7de3121fbe6444ea9c0d75f6f879fa0ad9462",
+      "signature_valid": true
+    },
+    "gpkg.db": {
+      "sha256": "b316b3e0ce15746a9522b3f12769fb431e47f3f9f67dc3a78e161295fb1fbc41",
+      "signature_valid": true
+    }
+  },
+  "packages": {
+    "box64-glibc": {
+      "repository": "gpkg",
+      "version": "0.4.4-0",
+      "filename": "box64-glibc-0.4.4-0-aarch64.pkg.tar.xz",
+      "sha256": "b4d11d3e9866fee2a72443f19ec7adc4fb1d39eb1aa10f3b4898a8ecb866b010",
+      "signature_valid": true,
+      "dependencies": [
+        "gcc-libs-glibc"
+      ]
+    },
+    "gcc-libs-glibc": {
+      "repository": "gpkg",
+      "version": "14.2.1-1",
+      "filename": "gcc-libs-glibc-14.2.1-1-aarch64.pkg.tar.xz",
+      "sha256": "9316728ceeb23c320756aa0bb03460f9767b6efdc44a478c86f7fcc44c6e11ec",
+      "signature_valid": true,
+      "dependencies": [
+        "glibc"
+      ]
+    },
+    "glibc": {
+      "repository": "gpkg",
+      "version": "2.44-0",
+      "filename": "glibc-2.44-0-aarch64.pkg.tar.xz",
+      "sha256": "8725a20d85fa35a094cf092286295668fd5292247128c4bb8101585ba063799c",
+      "signature_valid": true,
+      "dependencies": [
+        "linux-api-headers-glibc"
+      ]
+    },
+    "glibc-runner": {
+      "repository": "gpkg",
+      "version": "2.0-3",
+      "filename": "glibc-runner-2.0-3-any.pkg.tar.xz",
+      "sha256": "7233864e02629cfbd18adeeb7055b5ae917d23defc9f138e81a4d1745851dd93",
+      "signature_valid": true,
+      "dependencies": [
+        "glibc",
+        "termux-exec-glibc",
+        "bash-glibc",
+        "bash",
+        "patchelf-glibc",
+        "binutils-glibc",
+        "strace-glibc"
+      ]
+    },
+    "libogg-glibc": {
+      "repository": "gpkg",
+      "version": "1.3.6-0",
+      "filename": "libogg-glibc-1.3.6-0-aarch64.pkg.tar.xz",
+      "sha256": "c79cd3f588b459d13aacbbd9d55995a65d64e425654b005a739fe47382f8bea3",
+      "signature_valid": true,
+      "dependencies": [
+        "glibc"
+      ]
+    },
+    "libpulse-glibc": {
+      "repository": "gpkg",
+      "version": "17.0-1",
+      "filename": "libpulse-glibc-17.0-1-aarch64.pkg.tar.xz",
+      "sha256": "49636a9e3fdd74cf7c0630d79c21c4d7fae4c600dda9d731cbf2bdc068194287",
+      "signature_valid": true,
+      "dependencies": [
+        "libsndfile-glibc",
+        "dbus-glibc",
+        "pulseaudio"
+      ]
+    },
+    "dotnet-runtime-9.0": {
+      "repository": "main",
+      "version": "9.0.21-0",
+      "filename": "dotnet-runtime-9.0-9.0.21-0-aarch64.pkg.tar.xz",
+      "sha256": "2e1e53425bb2b6d36a2a36693073010523dce8e6f422baba5413fd026b792048",
+      "signature_valid": true,
+      "dependencies": [
+        "dotnet-hostfxr-9.0",
+        "libicu",
+        "openssl",
+        "zlib"
+      ]
+    }
+  },
+  "dependency_name_closure": {
+    "package_count": 136,
+    "missing": [],
+    "real_pacman_transaction": false
+  },
+  "depotdownloader": {
+    "version": "3.4.0",
+    "framework": "net9.0",
+    "sha256": "7419f65efb7eb16b6e56987ed1b76475f29c02475c0016166c84798388e796bc"
+  },
+  "on_device_test": false
+}

@@ -9,6 +9,26 @@ on:
 permissions:
   contents: read
 jobs:
+  valheim:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Exercise official glibc/Box64 and anonymous Valheim setup (no proot)
+        run: |
+          set -euo pipefail
+          docker run --rm --user 1000:1000 -v "$PWD:/repo:ro" \
+            --entrypoint /data/data/com.termux/files/usr/bin/bash \
+            termux/termux-docker-pacman@sha256:489fa5abfae9244b1c5229cdff6b77007846d7ab7a028768ce1c92967c7999e4 \
+            /repo/scripts/probe-native-servers-valheim.sh 2>&1 | tee valheim-probe.log
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        if: always()
+        with:
+          name: valheim-probe-evidence
+          path: valheim-probe.log
+          retention-days: 14
   probe:
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 45
