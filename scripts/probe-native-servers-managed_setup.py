@@ -166,7 +166,18 @@ def main(kind):
     env['DOTNET_ROLL_FORWARD'] = 'LatestMinor'
     assembly = installed / ('TShock.Server.dll' if kind == 'tshock' else 'tModLoader.dll')
     command = ['dotnet', str(assembly)] + (['-server'] if kind == 'tmodloader' else [])
-    command += ['-savedirectory', str(state), '-world', str(state / 'worlds/world.wld'), '-worldname', 'world', '-autocreate', '1', '-noupnp', *args[1:]]
+    supplied = args[1:]
+    # Upstream parsers need each option only once. Never let a built-in default
+    # shadow the user's world/config argument, or create a different test world.
+    defaults = {'-tmlsavedirectory' if kind == 'tmodloader' else '-savedirectory': str(state)}
+    if '-config' not in supplied:
+        defaults.update({'-world': str(state / 'worlds/world.wld'), '-worldname': 'world', '-autocreate': '1'})
+    for option, value in defaults.items():
+        if option not in supplied:
+            command += [option, value]
+    if '-noupnp' not in supplied:
+        command += ['-noupnp']
+    command += supplied
     # Upstream assembly/native resolvers also use their application directory.
     # Explicit -savedirectory/-world keep mutable save data outside that directory.
     os.chdir(installed)

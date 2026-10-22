@@ -38,6 +38,36 @@ class Patch {
             var reference = (MethodReference)init.Operand;
             init.OpCode = OpCodes.Nop; init.Operand = null;
             method.Body.GetILProcessor().InsertAfter(attach, Instruction.Create(OpCodes.Call, reference));
+            // Mono can initialize ServerApi while JIT-compiling this method,
+            // before its first instruction executes. ServerApi's cctor writes
+            // Main.SkipAssemblyLoad, which initializes Main.WorldPath from the
+            // still-null Terraria.Program.SavePath. Keep path preparation in a
+            // separate, non-inlined entry point before any ServerApi reference.
+            var program = method.DeclaringType;
+            if (program.Methods.Any(m => m.Name == "RunPrepared"))
+                throw new Exception("Native bootstrap is already present");
+            var prepare = program.Methods.Single(m => m.Name == "PrepareSavePath");
+            var prepareCall = method.Body.Instructions.Single(i => i.Operand is MethodReference r && r.Name == "PrepareSavePath");
+            if (prepareCall.Previous.OpCode != OpCodes.Ldarg_0 || method.Parameters.Count != 1 ||
+                    method.ReturnType.FullName != "System.Void")
+                throw new Exception("Unexpected path preparation sequence");
+            prepareCall.Previous.OpCode = OpCodes.Nop;
+            prepareCall.OpCode = OpCodes.Nop; prepareCall.Operand = null;
+            var entry = new MethodDefinition("Main", method.Attributes, method.ReturnType);
+            entry.Parameters.Add(new ParameterDefinition("args", ParameterAttributes.None, method.Parameters[0].ParameterType));
+            entry.ImplAttributes |= MethodImplAttributes.NoInlining;
+            prepare.ImplAttributes |= MethodImplAttributes.NoInlining;
+            method.ImplAttributes |= MethodImplAttributes.NoInlining;
+            method.Name = "RunPrepared";
+            method.IsPublic = false; method.IsPrivate = true;
+            program.Methods.Add(entry);
+            var bootstrap = entry.Body.GetILProcessor();
+            bootstrap.Append(Instruction.Create(OpCodes.Ldarg_0));
+            bootstrap.Append(Instruction.Create(OpCodes.Call, prepare));
+            bootstrap.Append(Instruction.Create(OpCodes.Ldarg_0));
+            bootstrap.Append(Instruction.Create(OpCodes.Call, method));
+            bootstrap.Append(Instruction.Create(OpCodes.Ret));
+            if (assembly.MainModule.EntryPoint == method) assembly.MainModule.EntryPoint = entry;
             var error = assembly.MainModule.Types.Single(t => t.FullName == "TerrariaApi.Server.Program")
                 .Methods.Single(m => m.Name == "UnhandledException");
             error.Body = new MethodBody(error);
