@@ -2,8 +2,8 @@
 set -euo pipefail
 server=$1
 case "$server" in
-    tshock) runtime=dotnet-runtime-9.0 ;;
-    tmodloader|tmodloader-patched) runtime=dotnet-runtime-8.0 ;;
+    tshock|tshock-installed) runtime=dotnet-runtime-9.0 ;;
+    tmodloader|tmodloader-patched|tmodloader-installed) runtime=dotnet-runtime-8.0 ;;
     vanilla-pumpkin) runtime=mono ;;
     *) exit 2 ;;
 esac
@@ -20,10 +20,22 @@ dotnet --info
 printf 'Android build.prop present: '; test -f /system/build.prop && echo yes || echo no
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
-cp -r "/input/$server/." "$work/"
+if [[ $server != *-installed ]]; then cp -r "/input/$server/." "$work/"; fi
 cd "$work"
 export HOME="$work/home" XDG_DATA_HOME="$work/data" XDG_CONFIG_HOME="$work/config"
 mkdir -p "$HOME" "$XDG_DATA_HOME" "$XDG_CONFIG_HOME"
+if [[ $server == *-installed ]]; then
+    pacman -S --noconfirm clang sdl2
+    support="$PREFIX/lib/terraria-managed-support"
+    mkdir -p "$support"
+    cp -r /input/support/. "$support/"
+    clang -shared -fPIC /tests/probe-native-servers-cache.c -o "$support/libmonomod-bionic.so"
+    kind=${server%-installed}
+    python "$support/managed_setup.py" "$kind" install
+    python /tests/probe-native-servers-monitor.py 19203 python "$support/managed_setup.py" "$kind" run \
+        -lang 1 -ip 127.0.0.1 -port 19203 -world "$work/test.wld" -worldname test -autocreate 1 -maxplayers 2
+    exit
+fi
 if [[ $server == tmodloader-patched || $server == tshock ]]; then
     pacman -S --noconfirm clang
     if [[ $server == tmodloader-patched ]]; then

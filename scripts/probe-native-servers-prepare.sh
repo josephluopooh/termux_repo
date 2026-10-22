@@ -98,6 +98,16 @@ XML
     cp scripts/probe-native-servers-patch.cs native-probe/patch-src/Program.cs
     dotnet run --project native-probe/patch-src -c Release -- native-probe/tmodloader-patched/tModLoader.dll
     touch native-probe/tmodloader-patched/.native-patch-complete
+    # Test the distributable helper plus direct-upstream setup path separately.
+    mkdir -p native-probe/support-src native-probe/support
+    cat > native-probe/support-src/managed-patch.csproj <<'XML'
+<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework></PropertyGroup><ItemGroup><PackageReference Include="Mono.Cecil" Version="0.11.6" /></ItemGroup></Project>
+XML
+    cp scripts/probe-native-servers-managed-patch.cs native-probe/support-src/Program.cs
+    dotnet publish native-probe/support-src -c Release --no-self-contained -p:UseAppHost=false -o "$PWD/native-probe/support"
+    cp "$core" native-probe/support/MonoMod.Core.dll
+    cp native-probe/detour/MonoMod.{Utils,RuntimeDetour}.dll native-probe/support/
+    cp scripts/probe-native-servers-managed_setup.py native-probe/support/managed_setup.py
 else
     result=1
 fi
