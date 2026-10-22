@@ -6,6 +6,11 @@ on:
       - '.github/workflows/native-server-probes.yml'
       - 'scripts/probe-native-servers*'
   workflow_dispatch:
+    inputs:
+      valheim:
+        description: 'Run the blocked Valheim runtime diagnostic after a relevant compatibility change'
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
@@ -31,6 +36,7 @@ jobs:
           path: pumpkin-persistence.log
           retention-days: 14
   valheim:
+    if: github.event_name == 'workflow_dispatch' && inputs.valheim
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 45
     steps:

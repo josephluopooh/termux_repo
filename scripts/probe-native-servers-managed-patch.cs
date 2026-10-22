@@ -22,6 +22,19 @@ class Patch {
             method.Body = new MethodBody(method);
             method.Body.Instructions.Add(Instruction.Create(OpCodes.Ret));
         } else if (mode == "tshock") {
+            // The local extractor flattens upstream's bin directory. The
+            // launcher's fallback resolver still probes bin; point that exact
+            // resolver at the adapted application directory instead.
+            string launcherFile = Path.Combine(Path.GetDirectoryName(file)!, "TShock.Server.dll");
+            using (var launcher = AssemblyDefinition.ReadAssembly(launcherFile, new ReaderParameters { InMemory = true })) {
+                var binding = launcher.MainModule.GetTypes().SelectMany(t => t.Methods)
+                    .Single(m => m.Name.Contains("Default_Resolving") && m.HasBody);
+                var directory = binding.Body.Instructions.Single(i => i.OpCode == OpCodes.Ldstr && (string)i.Operand == "bin");
+                directory.Operand = ".";
+                launcher.Write(launcherFile + ".patched");
+            }
+            File.Move(launcherFile + ".patched", launcherFile, true);
+            Console.WriteLine("Adapted TShock fallback resolver to the extracted application directory");
             // Upstream's managed Steamworks.NET is marked AMD64 even in the
             // Linux ARM64 archive. Mono rejects that architecture when it loads
             // OTAPI's network type metadata. The payload is IL-only and unsigned;
