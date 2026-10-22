@@ -16,8 +16,7 @@ if [[ $server == vanilla-pumpkin ]]; then
     exec python /tests/additions-smoke-test.py
 fi
 if [[ $server == tshock* ]]; then
-    # Use MonoMod's supported ordinary-assembly generator for Mono metadata.
-    export MONOMOD_DMDType=cecil SERVER_PROTOCOL_VERSION=326
+    export SERVER_PROTOCOL_VERSION=326
 fi
 pacman -Q "$runtime" dotnet-host libsqlite
 dotnet --info

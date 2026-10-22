@@ -65,6 +65,12 @@ with tempfile.TemporaryDirectory(prefix='valheim-native-probe-') as temporary:
                 result = subprocess.check_output(['greadelf', '-d', str(p)], text=True)
                 needed = [line.strip() for line in result.splitlines() if 'NEEDED' in line or 'RPATH' in line or 'RUNPATH' in line]
                 print('VALHEIM_ELF', p.relative_to(payload), json.dumps(needed), flush=True)
+    # Identify the exact downloaded Steam binary without uploading its payload.
+    steamclient = payload / 'linux64/steamclient.so'
+    if steamclient.is_file():
+        print('VALHEIM_STEAMCLIENT', json.dumps(dict(
+            bytes=steamclient.stat().st_size,
+            sha256=hashlib.sha256(steamclient.read_bytes()).hexdigest())), flush=True)
     saved_world = None
     for attempt in range(2):
         if saved_world is not None:

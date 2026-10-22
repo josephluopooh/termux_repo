@@ -9,6 +9,27 @@ on:
 permissions:
   contents: read
 jobs:
+  pumpkin:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Check native Pumpkin world metadata across restart
+        run: |
+          set -euo pipefail
+          docker run --rm --user 1000:1000 -v "$PWD:/repo:ro" \
+            --entrypoint /data/data/com.termux/files/usr/bin/bash \
+            termux/termux-docker-pacman@sha256:489fa5abfae9244b1c5229cdff6b77007846d7ab7a028768ce1c92967c7999e4 \
+            -c 'set -euo pipefail; pacman -Syu --noconfirm python ca-certificates; install -m700 /repo/packages/pumpkin-server/pumpkin-server "$PREFIX/bin/pumpkin-server"; ln -s pumpkin-server "$PREFIX/bin/pumpkin"; python /repo/scripts/probe-native-servers-pumpkin.py' \
+            2>&1 | tee pumpkin-persistence.log
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        if: always()
+        with:
+          name: pumpkin-persistence-evidence
+          path: pumpkin-persistence.log
+          retention-days: 14
   valheim:
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 45
