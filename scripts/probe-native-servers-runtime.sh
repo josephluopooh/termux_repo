@@ -40,6 +40,10 @@ if [[ $server == *-installed ]]; then
         DOTNET_ROLL_FORWARD=Major MONO_LOG_LEVEL=debug MONO_LOG_MASK=asm \
             dotnet "$support/managed-patch.dll" bindings "$installed" || echo 'Direct binding probe failed; retaining the full server failure gate'
     fi
+    if [[ $kind == tshock ]]; then
+        python /tests/probe-native-servers-tshock.py "$support"
+        exit
+    fi
     python /tests/probe-native-servers-monitor.py 19203 python "$support/managed_setup.py" "$kind" run \
         -lang 1 -ip 127.0.0.1 -port 19203 -world "$work/test.wld" -worldname test -autocreate 1 -maxplayers 2
     exit

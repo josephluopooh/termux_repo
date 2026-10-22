@@ -180,9 +180,8 @@ def main(kind):
     state = base / 'state'; state.mkdir(exist_ok=True)
     (state / 'worlds').mkdir(exist_ok=True)
     if kind == 'tshock':
-        plugins = state / 'ServerPlugins'; plugins.mkdir(exist_ok=True)
-        for item in (installed / 'ServerPlugins').iterdir():
-            if item.is_file() and not (plugins / item.name).exists(): shutil.copy2(item, plugins / item.name)
+        for folder in ('ServerPlugins', 'tshock', 'logs', 'crashes'):
+            (state / folder).mkdir(exist_ok=True)
     env = dict(os.environ)
     env['LD_LIBRARY_PATH'] = str(SUPPORT) + ':' + str(installed) + (':' + env['LD_LIBRARY_PATH'] if env.get('LD_LIBRARY_PATH') else '')
     env['FNA_PLATFORM_BACKEND'] = 'NONE'
@@ -193,6 +192,12 @@ def main(kind):
     # Upstream parsers need each option only once. Never let a built-in default
     # shadow the user's world/config argument, or create a different test world.
     defaults = {'-tmlsavedirectory' if kind == 'tmodloader' else '-savedirectory': str(state)}
+    if kind == 'tshock':
+        # Built-in TShock stays in the immutable application's ServerPlugins;
+        # user plugins and all mutable configuration/database/logs live in state.
+        defaults.update({'-configpath': str(state / 'tshock'), '-logpath': str(state / 'logs'),
+                         '-additionalplugins': str(state / 'ServerPlugins'),
+                         '-crashdir': str(state / 'crashes'), '-banlist': str(state / 'banlist.txt')})
     if '-config' not in supplied:
         defaults.update({'-world': str(state / 'worlds/world.wld'), '-worldname': 'world', '-autocreate': '1'})
     for option, value in defaults.items():
@@ -203,7 +208,7 @@ def main(kind):
     command += supplied
     # Upstream assembly/native resolvers also use their application directory.
     # Explicit -savedirectory/-world keep mutable save data outside that directory.
-    os.chdir(installed)
+    os.chdir(state if kind == 'tshock' else installed)
     os.execvpe('dotnet', command, env)
 
 if __name__ == '__main__':

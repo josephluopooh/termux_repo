@@ -1,5 +1,6 @@
 """Exercise native server startup, protocol, save, and a separate reload."""
 import os
+import json
 import pathlib
 import socket
 import struct
@@ -41,6 +42,13 @@ def boot(command, name):
                             assert reply[0] == 2, reply
                         else:
                             assert reply[0] == 3, reply
+                            # TShock keeps its normal UUID requirement; a
+                            # synthetic client must supply packet 68 before 6.
+                            if identifier := os.environ.get('SERVER_PROTOCOL_UUID'):
+                                identifier = identifier.encode('ascii')
+                                assert len(identifier) == 36
+                                uuid_packet = b'\x44' + bytes([len(identifier)]) + identifier
+                                client.sendall(struct.pack('<H',len(uuid_packet)+2)+uuid_packet)
                             client.sendall(b'\x03\x00\x06')
                             reply = packet()
                             assert reply[0] == 7 and len(reply) > 20, reply
@@ -59,6 +67,9 @@ def boot(command, name):
                 time.sleep(1)
                 assert process.poll() is None, 'Server crashed after wrong-version packet'
                 print('PASS: wrong-version rejection remains stable', flush=True)
+            if name == 'native-create':
+                for command in json.loads(os.environ.get('SERVER_TEST_CONSOLE_COMMANDS', '[]')):
+                    process.stdin.write(command + '\n')
             process.stdin.write('exit\n'); process.stdin.flush()
             assert process.wait(60) == 0
         finally:
