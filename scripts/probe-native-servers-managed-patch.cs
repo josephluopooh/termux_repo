@@ -7,6 +7,26 @@ using System.IO;
 
 class Patch {
     static void Main(string[] args) {
+        if (args[0] == "bindings") {
+            try {
+                string root = Path.GetFullPath(args[1]);
+                var steam = System.Runtime.Loader.AssemblyLoadContext.Default.LoadFromAssemblyPath(Path.Combine(root, "Steamworks.NET.dll"));
+                Console.WriteLine("BIND_STEAM " + steam.FullName);
+                Console.WriteLine("BIND_STEAM_TYPE " + steam.GetType("Steamworks.CSteamID", true)!.FullName);
+                var game = System.Runtime.Loader.AssemblyLoadContext.Default.LoadFromAssemblyPath(Path.Combine(root, "OTAPI.dll"));
+                foreach (string name in new[] { "Terraria.Social.Steam.NetSocialModule", "Terraria.Social.Steam.NetClientSocialModule" }) {
+                    var type = game.GetType(name, true)!;
+                    Console.WriteLine("BIND_GAME_TYPE " + type.FullName);
+                    foreach (var field in type.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static))
+                        Console.WriteLine("BIND_FIELD " + field.Name + " " + field.FieldType.FullName);
+                }
+            } catch (Exception e) {
+                for (Exception error = e; error != null; error = error.InnerException)
+                    Console.WriteLine("BIND_ERROR " + error.GetType().FullName + " " + error.Message);
+                Environment.ExitCode = 1;
+            }
+            return;
+        }
         string mode = args[0], file = Path.GetFullPath(args[1]);
         using var resolver = new DefaultAssemblyResolver();
         resolver.AddSearchDirectory(Path.GetDirectoryName(typeof(object).Assembly.Location));
@@ -115,6 +135,17 @@ class Patch {
             method.IsPublic = false; method.IsPrivate = true;
             program.Methods.Add(entry);
             var bootstrap = entry.Body.GetILProcessor();
+            // Load the verified local managed dependency before Mono JITs
+            // the server entry path. This also exposes a direct binding error
+            // before protocol logging can obscure it in DynamicMethod frames.
+            bootstrap.Append(Instruction.Create(OpCodes.Call, assembly.MainModule.ImportReference(
+                typeof(AppContext).GetProperty("BaseDirectory")!.GetMethod!)));
+            bootstrap.Append(Instruction.Create(OpCodes.Ldstr, "Steamworks.NET.dll"));
+            bootstrap.Append(Instruction.Create(OpCodes.Call, assembly.MainModule.ImportReference(
+                typeof(Path).GetMethod("Combine", new[] { typeof(string), typeof(string) })!)));
+            bootstrap.Append(Instruction.Create(OpCodes.Call, assembly.MainModule.ImportReference(
+                typeof(System.Reflection.Assembly).GetMethod("LoadFrom", new[] { typeof(string) })!)));
+            bootstrap.Append(Instruction.Create(OpCodes.Pop));
             bootstrap.Append(Instruction.Create(OpCodes.Ldarg_0));
             bootstrap.Append(Instruction.Create(OpCodes.Call, prepare));
             bootstrap.Append(Instruction.Create(OpCodes.Ldarg_0));
