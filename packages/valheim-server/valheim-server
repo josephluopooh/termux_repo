@@ -84,7 +84,7 @@ def locked(paths):
 
 
 def check_platform():
-    if platform.system() != 'Linux' or platform.machine() not in ('aarch64', 'arm64'):
+    if platform.system() not in ('Linux', 'Android') or platform.machine() not in ('aarch64', 'arm64'):
         raise Error('This draft requires aarch64 Termux-Pacman on Android; host execution is unsupported.')
     if os.environ.get('PREFIX', str(PREFIX)) != str(PREFIX) or not PREFIX.is_dir():
         raise Error(f'This package requires the standard Termux prefix {PREFIX}.')
