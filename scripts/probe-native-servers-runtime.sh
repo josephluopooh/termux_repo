@@ -22,15 +22,19 @@ work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 cp -r "/input/$server/." "$work/"
 cd "$work"
-if [[ $server == tmodloader-patched ]]; then
-    pacman -S --noconfirm clang sdl2
-    ln -sf "$PREFIX/lib/libSDL2.so" "$work/Libraries/Native/Linux-arm64/libSDL2-2.0.so"
+if [[ $server == tmodloader-patched || $server == tshock ]]; then
+    pacman -S --noconfirm clang
+    if [[ $server == tmodloader-patched ]]; then
+        test -f "$work/.native-patch-complete" || { echo 'Managed patch build failed; no patched server to test'; exit 1; }
+        pacman -S --noconfirm sdl2
+        ln -sf "$PREFIX/lib/libSDL2.so" "$work/Libraries/Native/Linux-arm64/libSDL2-2.0.so"
+    fi
     clang -shared -fPIC /tests/probe-native-servers-cache.c -o "$work/libmonomod-bionic.so"
     # Application-local helper. No replacement of system libraries or OS spoofing.
     export LD_LIBRARY_PATH="$work${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
     cp -r /input/detour "$work/detour"
     cp "$work/libmonomod-bionic.so" "$work/detour/"
-    dotnet "$work/detour/detour.dll"
+    DOTNET_ROLL_FORWARD=Major dotnet "$work/detour/detour.dll"
 fi
 if [[ $server == tshock ]]; then
     # The build uses bundle_sqlite3 + official libsqlite, not e_sqlite3.
