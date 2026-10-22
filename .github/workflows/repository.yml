@@ -26,7 +26,7 @@ jobs:
           - group: servers
             packages: pumpkin-server terraria-server
           - group: managed-servers
-            packages: terraria-managed-support tmodloader-server
+            packages: terraria-managed-support tmodloader-server tshock-server
           - group: network
             packages: chisel ntfy copyparty
           - group: rainfrog

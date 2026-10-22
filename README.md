@@ -81,6 +81,7 @@ pacman -Syu
 | `terraria-server` | [Official vanilla Terraria downloader and native Mono launcher](packages/terraria-server/README.md). |
 | `pumpkin-server` | [Upstream downloader and launcher for native Android Pumpkin](packages/pumpkin-server/README.md). |
 | `tmodloader-server` | [Native .NET server setup and persistent worlds](packages/tmodloader-server/README.md). |
+| `tshock-server` | [Native TShock server setup, administration and persistent state](packages/tshock-server/README.md). |
 | `chisel` | [Authenticated TCP/UDP tunnels over HTTP](packages/chisel/README.md). |
 | `ntfy` | [Notification CLI and HTTP API server; browser UI excluded](packages/ntfy/README.md). |
 | `copyparty` | [File server with its browser interface](packages/copyparty/README.md). |
@@ -88,10 +89,10 @@ pacman -Syu
 | `presenterm` | [Markdown slides in the terminal](packages/presenterm/README.md). |
 
 The owner selected these five additional applications. Other shortlist recipes
-remain inactive under `candidates/`. TShock and Valheim are also requested; their remaining
-[compatibility checks](docs/native-server-compatibility.md) keep them outside
+remain inactive under `candidates/`. Valheim is also requested; its remaining
+[runtime restriction](docs/native-server-compatibility.md) keeps it outside
 the publication manifest. `terraria-managed-support` is an application-local
-dependency for tModLoader, using the official Termux .NET runtime.
+dependency for tModLoader and TShock, using the official Termux .NET runtimes.
 
 See [releases](https://github.com/josephluopooh/termux_repo/releases) for published
 versions and [packages.json](packages.json) for the selected package manifest.

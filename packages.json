@@ -11,6 +11,7 @@
     "rainfrog",
     "presenterm",
     "terraria-managed-support",
-    "tmodloader-server"
+    "tmodloader-server",
+    "tshock-server"
   ]
 }

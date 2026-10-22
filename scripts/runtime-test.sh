@@ -34,6 +34,7 @@ for application in chisel ntfy copyparty rainfrog presenterm; do
     python "/recipes/$application/smoke-test.py"
 done
 python /tests/managed-server-smoke-test.py
+python /tests/tshock-server-smoke-test.py
 weechat-headless --stdout -d "$work/server" -r '/set logger.file.flush_delay 0;/set logger.level.core.weechat 9' -r '/python eval print("PYTHON_PLUGIN_OK")' -r '/set relay.network.bind_address 127.0.0.1;/set relay.network.password ci-loopback-only;/relay add ipv4.api 19001' > "$work/server.log" 2>&1 &
 server_pid=$!
 for _attempt in {1..30}; do

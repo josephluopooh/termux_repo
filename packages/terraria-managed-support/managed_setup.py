@@ -116,6 +116,29 @@ def install(kind, base):
             for item in (staged / 'bin').iterdir():
                 if item.is_file(): shutil.copy2(item, staged / item.name)
             shutil.rmtree(staged / 'bin')
+            # Upstream's ARM64 bundle selects NuGet's reference-only fallback.
+            # Obtain the real managed implementation from the same official
+            # NuGet version. Native Steam libraries are neither fetched nor used.
+            steam_url = 'https://api.nuget.org/v3-flatcontainer/steamworks.net/2024.8.0/steamworks.net.2024.8.0.nupkg'
+            steam_hash = '2e42095166a84902402e5a7454c4ce1899cab843725990b08ad7983d61f25679'
+            with urllib.request.urlopen(steam_url, timeout=90) as response:
+                steam_archive = response.read()
+            if hashlib.sha256(steam_archive).hexdigest() != steam_hash:
+                raise ValueError('Steamworks.NET archive checksum mismatch')
+            with zipfile.ZipFile(io.BytesIO(steam_archive)) as package:
+                (staged / 'Steamworks.NET.dll').write_bytes(package.read('runtimes/linux-x64/lib/netstandard2.1/Steamworks.NET.dll'))
+            license_url = 'https://raw.githubusercontent.com/rlabrecque/Steamworks.NET/2024.8.0/LICENSE.txt'
+            with urllib.request.urlopen(license_url, timeout=60) as response:
+                notice = response.read()
+            if hashlib.sha256(notice).hexdigest() != '4f55f7c493fcba70e430a13ff27ce9f268b85942cb0e79dc01d52d27e3734c78':
+                raise ValueError('Steamworks.NET license checksum mismatch')
+            (staged / 'licenses').mkdir(exist_ok=True)
+            (staged / 'licenses/Steamworks.NET-MIT.txt').write_bytes(notice)
+            (staged / 'licenses/Steamworks.NET-source.json').write_text(json.dumps({
+                'version': '2024.8.0', 'archive': steam_url, 'sha256': steam_hash,
+                'notice': license_url, 'notice_sha256': hashlib.sha256(notice).hexdigest(),
+                'change': 'IL-only managed runtime metadata adapted to AnyCPU; native Steam APIs are not enabled'
+            }) + '\n')
             assembly = staged / 'TerrariaServer.dll'
             for library in SUPPORT.glob('MonoMod.*.dll'): shutil.copy2(library, staged / library.name)
             # SQLitePCLRaw's e_sqlite3 provider uses standard sqlite3_* symbols.
@@ -158,9 +181,8 @@ def main(kind):
     worlds = state / ('Worlds' if kind == 'tmodloader' else 'worlds')
     worlds.mkdir(exist_ok=True)
     if kind == 'tshock':
-        plugins = state / 'ServerPlugins'; plugins.mkdir(exist_ok=True)
-        for item in (installed / 'ServerPlugins').iterdir():
-            if item.is_file() and not (plugins / item.name).exists(): shutil.copy2(item, plugins / item.name)
+        for folder in ('ServerPlugins', 'tshock', 'logs', 'crashes'):
+            (state / folder).mkdir(exist_ok=True)
     env = dict(os.environ)
     env['LD_LIBRARY_PATH'] = str(SUPPORT) + ':' + str(installed) + (':' + env['LD_LIBRARY_PATH'] if env.get('LD_LIBRARY_PATH') else '')
     env['FNA_PLATFORM_BACKEND'] = 'NONE'
@@ -171,6 +193,12 @@ def main(kind):
     # Upstream parsers need each option only once. Never let a built-in default
     # shadow the user's world/config argument, or create a different test world.
     defaults = {'-tmlsavedirectory' if kind == 'tmodloader' else '-savedirectory': str(state)}
+    if kind == 'tshock':
+        # Built-in TShock stays in the immutable application's ServerPlugins;
+        # user plugins and all mutable configuration/database/logs live in state.
+        defaults.update({'-configpath': str(state / 'tshock'), '-logpath': str(state / 'logs'),
+                         '-additionalplugins': str(state / 'ServerPlugins'),
+                         '-crashdir': str(state / 'crashes'), '-banlist': str(state / 'banlist.txt')})
     if '-config' not in supplied:
         defaults.update({'-world': str(worlds / 'world.wld'), '-worldname': 'world', '-autocreate': '1'})
     for option, value in defaults.items():
@@ -181,7 +209,7 @@ def main(kind):
     command += supplied
     # Upstream assembly/native resolvers also use their application directory.
     # Explicit -savedirectory/-world keep mutable save data outside that directory.
-    os.chdir(installed)
+    os.chdir(state if kind == 'tshock' else installed)
     os.execvpe('dotnet', command, env)
 
 if __name__ == '__main__':

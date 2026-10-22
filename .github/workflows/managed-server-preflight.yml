@@ -5,6 +5,8 @@ on:
     paths:
       - 'packages/terraria-managed-support/**'
       - 'packages/tmodloader-server/**'
+      - 'packages/tshock-server/**'
+      - 'scripts/tshock-server-smoke-test.py'
       - 'scripts/managed-server-smoke-test.py'
       - '.github/workflows/managed-server-preflight.yml'
   workflow_dispatch:
@@ -18,16 +20,16 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           persist-credentials: false
-      - name: Select only the unpublished managed-server candidates for this preflight
+      - name: Select the managed-server packages for this preflight
         run: |
           python3 - <<'PY'
           import json
           from pathlib import Path
-          Path('packages.json').write_text(json.dumps({'packages': ['terraria-managed-support', 'tmodloader-server']}) + '\n')
+          Path('packages.json').write_text(json.dumps({'packages': ['terraria-managed-support', 'tmodloader-server', 'tshock-server']}) + '\n')
           PY
       - name: Build actual Pacman packages and verify ABI and notices
         env:
-          BUILD_PACKAGES: terraria-managed-support tmodloader-server
+          BUILD_PACKAGES: terraria-managed-support tmodloader-server tshock-server
           BUILD_GROUP: managed-server
           REPO_REVISION: 0.${{ github.run_number }}.${{ github.run_attempt }}
         run: bash scripts/build.sh
@@ -55,7 +57,7 @@ jobs:
             -v "$PWD/dist:/packages:ro" -v "$PWD/scripts:/tests:ro" \
             --entrypoint /data/data/com.termux/files/usr/bin/bash \
             termux/termux-docker-pacman@sha256:489fa5abfae9244b1c5229cdff6b77007846d7ab7a028768ce1c92967c7999e4 \
-            -c 'set -euo pipefail; pacman -Syu --noconfirm; pacman -U --noconfirm /packages/*.pkg.tar.xz; python /tests/managed-server-smoke-test.py' \
+            -c 'set -euo pipefail; pacman -Syu --noconfirm; pacman -U --noconfirm /packages/*.pkg.tar.xz; python /tests/managed-server-smoke-test.py; python /tests/tshock-server-smoke-test.py' \
             | tee managed-server-runtime.log
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         if: always()

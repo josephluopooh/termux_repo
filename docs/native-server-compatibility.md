@@ -10,18 +10,28 @@ All test listeners bind to loopback. No package install starts a public listener
 | Official Terraria 1.4.5.8 | Native Mono world creation, valid protocol handshake/world info, save and reload | Real player sessions and physical devices untested |
 | Pumpkin 0.2.0 (Java 26.3) | Native Android payload; protocol 777 status, clean stop, saved `level.dat` and unchanged world seed after restart | Gameplay, chunks, clients and mods untested |
 | tModLoader 2026.08.3.0 (Terraria 1.4.4.9) | Actual Pacman install and pinned setup, world creation, wrong-version protocol rejection, save/reload, existing world path with spaces and clean exit pass | Real player sessions and arbitrary mods untested; Steam/Workshop disabled |
-| TShock 6.2.1 (Terraria 1.4.5.8) | Startup/world creation work; protocol fails because the upstream ARM64 payload contains a reference-only Steamworks.NET assembly; official runtime asset under test | Inactive; no successful protocol/lifecycle claim |
+| TShock 6.2.1 (Terraria 1.4.5.8) | Actual Pacman install/setup, valid protocol and UUID/world info, wrong-version rejection, save/reload/exit and persistent SQLite administration command pass | Real player sessions, physical devices and third-party plugins untested |
 | Valheim | Anonymous on-phone downloader and glibc/Box64 launch reach Unity/world creation | Inactive; steamclient aborts before game-server connection |
 
-Evidence: [native server probes](https://github.com/josephluopooh/termux_repo/actions/runs/39832702343),
+Evidence: [native TShock/tModLoader probes](https://github.com/josephluopooh/termux_repo/actions/runs/39838809186),
+[packaged TShock preflight](https://github.com/josephluopooh/termux_repo/actions/runs/39839900803),
 [packaged tModLoader preflight](https://github.com/josephluopooh/termux_repo/actions/runs/39834231957),
-and [publication runtime tests](https://github.com/josephluopooh/termux_repo/actions/runs/39834232144).
-The latter passed all five selected application tests, vanilla/Pumpkin and
-the existing core-package checks. Signing succeeded, but release creation was
-rejected because concurrent diagnostic workflow changes made the target's
-workflow files differ from current main. Publication is being rerun from a fresh
-commit with stable workflow files and the existing credentials. Every runtime
-gate remains required.
+and [successful signed publication](https://github.com/josephluopooh/termux_repo/actions/runs/39837654522).
+That publication contains the five selected extras, vanilla, Pumpkin and
+tModLoader alongside the existing core packages. It was independently checked
+against the existing signing key, Pacman database and previous package hashes.
+TShock passed its separate actual-package gate and is selected for the next
+complete publication; the signed release index remains authoritative.
+
+The earlier release-creation HTTP 403 resulted from workflow differences between
+the build's target commit and current main. A fresh build with stable workflow
+files published successfully using the same credentials and permissions.
+
+TShock's upstream ARM64 archive included a reference-only Steamworks.NET
+assembly. Setup now obtains the checksum-pinned real managed implementation
+from official NuGet 2024.8.0 and adapts its IL-only architecture metadata to
+AnyCPU. Native Steam libraries are not enabled. The normal client UUID policy
+remains enabled; the synthetic test client supplies a UUID.
 
 ## Valheim runtime restriction
 
