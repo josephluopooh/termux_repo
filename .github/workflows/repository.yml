@@ -25,6 +25,12 @@ jobs:
             packages: cjson weechat-cjson toot
           - group: servers
             packages: pumpkin-server terraria-server
+          - group: network
+            packages: chisel ntfy copyparty
+          - group: rainfrog
+            packages: rainfrog
+          - group: presenterm
+            packages: presenterm
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -59,7 +65,7 @@ jobs:
         run: |
           set -euo pipefail
           docker run --rm --user 1000:1000 \
-            -v "$PWD/dist:/packages:ro" -v "$PWD/scripts:/tests:ro" \
+            -v "$PWD/dist:/packages:ro" -v "$PWD/scripts:/tests:ro" -v "$PWD/packages:/recipes:ro" \
             --entrypoint /data/data/com.termux/files/usr/bin/bash \
             termux/termux-docker-pacman@sha256:489fa5abfae9244b1c5229cdff6b77007846d7ab7a028768ce1c92967c7999e4 \
             /tests/runtime-test.sh | tee runtime-test.log

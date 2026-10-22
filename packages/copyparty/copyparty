@@ -1,0 +1,7 @@
+#!@TERMUX_PREFIX@/bin/python -I
+"""Pacman-owned launcher; mandatory templates are private, optional modules use Python's normal site directory."""
+import sys
+sys.dont_write_bytecode = True
+sys.path.insert(0, "@TERMUX_PREFIX@/lib/copyparty")
+from copyparty.__main__ import main
+main()

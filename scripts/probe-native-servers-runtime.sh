@@ -22,6 +22,8 @@ work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 cp -r "/input/$server/." "$work/"
 cd "$work"
+export HOME="$work/home" XDG_DATA_HOME="$work/data" XDG_CONFIG_HOME="$work/config"
+mkdir -p "$HOME" "$XDG_DATA_HOME" "$XDG_CONFIG_HOME"
 if [[ $server == tmodloader-patched || $server == tshock ]]; then
     pacman -S --noconfirm clang
     if [[ $server == tmodloader-patched ]]; then

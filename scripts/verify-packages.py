@@ -41,6 +41,10 @@ for archive in sorted(folder.glob('*.pkg.tar.xz')):
                     assert 'libc.so.6' not in abi and 'ld-linux' not in abi, (name, member.name)
                     if '/bin/' in member.name:
                         assert '/system/bin/linker64' in abi, (name, member.name, abi)
+                        if name in ('ntfy', 'rainfrog'):
+                            assert 'Shared library: [libsqlite3.so]' in abi, (name, abi)
+                        if name == 'presenterm':
+                            assert 'Shared library: [libonig.so]' in abi, abi
                     out = folder / 'evidence' / 'elf' / name
                     out.mkdir(parents=True, exist_ok=True)
                     (out / (member.name.replace('/', '_') + '.txt')).write_text(abi)
@@ -50,6 +54,16 @@ for archive in sorted(folder.glob('*.pkg.tar.xz')):
         if name == 'pumpkin-server':
             assert tar.getmember('data/data/com.termux/files/usr/bin/pumpkin-server').mode & 0o100
             assert tar.getmember('data/data/com.termux/files/usr/bin/pumpkin').linkname == 'pumpkin-server'
+        if name in ('chisel', 'ntfy', 'rainfrog', 'presenterm'):
+            manifest = 'data/data/com.termux/files/usr/share/doc/' + name + '/dependency-licenses/manifest.json'
+            assert json.loads(tar.extractfile(manifest).read()), name
+        if name == 'copyparty':
+            assert arch == 'any' and '.INSTALL' not in tar.getnames()
+            assert not any('/site-packages/' in m.name for m in tar.getmembers())
+            for member in tar.getmembers():
+                if member.isfile():
+                    assert not member.name.endswith(('.so', '.pyd', '.dll', '.exe', '.pyc')), member.name
+                    assert tar.extractfile(member).read(4) != b'\x7fELF', member.name
         if name == 'weechat-cjson':
             assert 'cjson' in info['depend']
             assert 'weechat' in info['conflict']

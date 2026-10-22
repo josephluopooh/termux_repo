@@ -1,0 +1,7 @@
+# Local API server. Start explicitly with: ntfy serve
+# Choose a bind address/authentication policy before exposing this to a network.
+listen-http: "127.0.0.1:8080"
+base-url: "http://127.0.0.1:8080"
+web-root: "disable"
+# The default message cache is memory-only. For persistence, use an absolute
+# cache-file path under your Termux home and manage its backups yourself.

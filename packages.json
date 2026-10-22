@@ -4,6 +4,11 @@
     "weechat-cjson",
     "toot",
     "pumpkin-server",
-    "terraria-server"
+    "terraria-server",
+    "chisel",
+    "ntfy",
+    "copyparty",
+    "rainfrog",
+    "presenterm"
   ]
 }

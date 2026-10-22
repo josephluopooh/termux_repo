@@ -1,0 +1,67 @@
+--- a/server/config_unix.go
++++ b/server/config_unix.go
+@@ -1,8 +1,9 @@
+ //go:build !windows
+ 
++// Modified for Termux: use the application prefix for config/shell paths.
+ package server
+ 
+ func init() {
+-	DefaultConfigFile = "/etc/ntfy/server.yml"
+-	DefaultTemplateDir = "/etc/ntfy/templates"
++	DefaultConfigFile = "@TERMUX_PREFIX@/etc/ntfy/server.yml"
++	DefaultTemplateDir = "@TERMUX_PREFIX@/etc/ntfy/templates"
+ }
+--- a/client/config_unix.go
++++ b/client/config_unix.go
+@@ -1,5 +1,6 @@
+ //go:build linux || dragonfly || freebsd || netbsd || openbsd
+ 
++// Modified for Termux: use the application prefix for config/shell paths.
+ package client
+ 
+ import (
+@@ -11,7 +12,7 @@
+ func init() {
+ 	u, err := user.Current()
+ 	if err == nil && u.Uid == "0" {
+-		DefaultConfigFile = "/etc/ntfy/client.yml"
++		DefaultConfigFile = "@TERMUX_PREFIX@/etc/ntfy/client.yml"
+ 	} else if configDir, err := os.UserConfigDir(); err == nil {
+ 		DefaultConfigFile = filepath.Join(configDir, "ntfy", "client.yml")
+ 	}
+--- a/cmd/subscribe_unix.go
++++ b/cmd/subscribe_unix.go
+@@ -1,11 +1,12 @@
+ //go:build linux || dragonfly || freebsd || netbsd || openbsd
+ 
++// Modified for Termux: use the application prefix for config/shell paths.
+ package cmd
+ 
+ const (
+ 	scriptExt                      = "sh"
+-	scriptHeader                   = "#!/bin/sh\n"
+-	clientCommandDescriptionSuffix = `The default config file for all client commands is /etc/ntfy/client.yml (if root user),
++	scriptHeader                   = "#!@TERMUX_PREFIX@/bin/sh\n"
++	clientCommandDescriptionSuffix = `The default config file for all client commands is @TERMUX_PREFIX@/etc/ntfy/client.yml (if root user),
+ or ~/.config/ntfy/client.yml for all other users.`
+ )
+ 
+--- a/cmd/serve.go
++++ b/cmd/serve.go
+@@ -1,5 +1,6 @@
+ //go:build !noserver
+ 
++// Modified for Termux: use the application prefix for config/shell paths.
+ package cmd
+ 
+ import (
+@@ -139,7 +140,7 @@
+ 	Before:    initConfigFileInputSourceFunc("config", flagsServe, initLogFunc),
+ 	Description: `Run the ntfy server and listen for incoming requests
+ 
+-The command will load the configuration from /etc/ntfy/server.yml. Config options can 
++The command will load the configuration from @TERMUX_PREFIX@/etc/ntfy/server.yml. Config options can 
+ be overridden using the command line options.
+ 
+ Examples:
