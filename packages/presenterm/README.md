@@ -24,7 +24,6 @@ under `$PREFIX/share/doc/presenterm`. TUR tree
 continues the repository's existing candidate draft.
 
 `python packages/presenterm/smoke-test.py` renders a generated text slide in a
-pseudo-terminal and checks its content. The earlier candidate passed
-cross-compilation in CI run 39815791199; the updated recipe and native runtime
-still need the integration release gate. A container test is not a physical
+pseudo-terminal and checks its content. The release workflow requires this
+test after a native Pacman installation. A container test is not a physical
 phone or graphics-protocol compatibility test.

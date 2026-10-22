@@ -39,4 +39,4 @@ under `$PREFIX/share/doc/ntfy`. TUR tree
 `python packages/ntfy/smoke-test.py` checks a loopback CLI publish/poll and a live
 HTTP subscription, then restarts the server and checks SQLite persistence.
 Run in a disposable native aarch64 Termux environment after installing the
-package. This draft has not yet passed the native build/runtime release gate.
+package. These checks gate publication in the repository's release workflow.

@@ -40,5 +40,5 @@ TUR tree `129d9f5e06a37f19313833b640d7bf0f7eb781f5` had no copyparty recipe.
 
 `python packages/copyparty/smoke-test.py` checks the HTML UI, uploads a generated
 file over loopback, and verifies the downloaded bytes in a temporary directory.
-The native Termux package still needs its build/runtime release gate; host
-Python tests do not establish Android compatibility.
+These checks gate publication after Pacman installation in a native aarch64
+Termux container. Physical Android storage permissions need device testing.

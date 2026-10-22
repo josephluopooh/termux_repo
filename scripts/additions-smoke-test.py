@@ -175,10 +175,25 @@ with tempfile.TemporaryDirectory(prefix='termux-additions-') as temporary:
     with daemon(args, vanilla) as process:
         wait_port(19108, process, 240)
         with socket.create_connection(('127.0.0.1', 19108), timeout=10) as client:
-            message = b'\x01\x09Terraria0'
+            # 1.4.5.8's curRelease is 326. Exercise a valid connection and world
+            # info request instead of racing the immediate wrong-version kick.
+            message = b'\x01\x0bTerraria326'
             client.sendall(struct.pack('<H', len(message) + 2) + message)
-            reply = client.recv(4096)
-            assert len(reply) >= 3 and reply[2] == 2, reply
+            def packet():
+                def exact(size):
+                    data = b''
+                    while len(data) < size:
+                        chunk = client.recv(size - len(data)); assert chunk, data
+                        data += chunk
+                    return data
+                length, = struct.unpack('<H', exact(2))
+                assert 3 <= length <= 65535
+                return exact(length - 2)
+            reply = packet()
+            assert reply[0] == 3, reply
+            client.sendall(b'\x03\x00\x06')
+            reply = packet()
+            assert reply[0] == 7 and len(reply) > 20, reply
         process.stdin.write('exit\n'); process.stdin.flush(); process.wait(40)
         assert process.returncode == 0 and world.is_file()
     # Reload the saved world as a distinct process, rather than only checking file creation.

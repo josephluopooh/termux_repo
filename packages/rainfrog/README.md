@@ -23,7 +23,6 @@ License: MIT. The package stages dependency notices and Cargo.lock under
 the repository's existing candidate draft.
 
 `python packages/rainfrog/smoke-test.py` creates a temporary SQLite database and
-checks that rainfrog renders its table in a pseudo-terminal. The earlier
-candidate passed cross-compilation in CI run 39815791199; this updated recipe
-and native runtime still need the integration release gate. A container smoke
+checks that rainfrog renders its table in a pseudo-terminal. The release
+workflow requires this test after a native Pacman installation. A container smoke
 test is not a physical-device or remote-database interoperability test.

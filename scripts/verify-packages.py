@@ -48,9 +48,18 @@ for archive in sorted(folder.glob('*.pkg.tar.xz')):
                     out = folder / 'evidence' / 'elf' / name
                     out.mkdir(parents=True, exist_ok=True)
                     (out / (member.name.replace('/', '_') + '.txt')).write_text(abi)
-        if name in ('terraria-server', 'pumpkin-server'):
+        if name in ('terraria-server', 'pumpkin-server', 'tmodloader-server'):
             assert arch == 'any' and '.INSTALL' not in tar.getnames()
             assert not any(m.name.endswith(('.exe', '.dll', '.so')) for m in tar.getmembers())
+        if name == 'terraria-managed-support':
+            assert arch == 'aarch64' and '.INSTALL' not in tar.getnames()
+            prefix = 'data/data/com.termux/files/usr/'
+            members = tar.getnames()
+            assert prefix + 'lib/terraria-managed-support/libmonomod-bionic.so' in members
+            assert prefix + 'lib/terraria-managed-support/managed-patch.dll' in members
+            assert not any(m.endswith(('TerrariaServer.exe', 'tModLoader.dll', 'OTAPI.dll')) for m in members)
+            notices = prefix + 'share/doc/terraria-managed-support/dependency-licenses/manifest.json'
+            assert json.loads(tar.extractfile(notices).read())
         if name == 'pumpkin-server':
             assert tar.getmember('data/data/com.termux/files/usr/bin/pumpkin-server').mode & 0o100
             assert tar.getmember('data/data/com.termux/files/usr/bin/pumpkin').linkname == 'pumpkin-server'

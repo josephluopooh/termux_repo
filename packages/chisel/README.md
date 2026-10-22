@@ -17,6 +17,6 @@ lock files are staged under `$PREFIX/share/doc/chisel`. TUR tree
 continues the repository's existing candidate draft.
 
 `python packages/chisel/smoke-test.py` verifies an authenticated loopback tunnel
-by transferring an HTTP payload. The earlier candidate passed cross-compilation
-in CI run 39815791199; the updated recipe and native runtime still need the
-integration release gate. No service starts during package installation.
+by transferring an HTTP payload. The release workflow requires this test in
+a native aarch64 Termux container after Pacman installation. No service starts
+during package installation. Physical-device networking is a separate check.

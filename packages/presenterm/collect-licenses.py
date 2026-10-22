@@ -57,10 +57,18 @@ for identity, (label, directory, license_id, license_file) in sorted(modules.ite
     if not copied and kind == 'cargo':
         vcs = directory / '.cargo_vcs_info.json'
         package = tomllib.loads((directory / 'Cargo.toml').read_text())['package']
-        repository = package.get('repository', '').removesuffix('.git').rstrip('/')
+        # Some crates identify their repository only by a GitHub homepage, or
+        # point at a workspace subdirectory. The archive's Git SHA still pins
+        # the source; never use the homepage's moving branch name.
+        repository = ''
+        for field in ('repository', 'homepage'):
+            match = re.match(r'^https://github.com/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)(?:/|$)', package.get(field, ''))
+            if match:
+                repository = 'https://github.com/' + match[1] + '/' + match[2].removesuffix('.git')
+                break
         commit = json.loads(vcs.read_text()).get('git', {}).get('sha1', '') if vcs.is_file() else ''
         if re.fullmatch(r'https://github.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', repository) and re.fullmatch(r'[0-9a-f]{40}', commit):
-            for filename in ('LICENSE', 'LICENSE.txt', 'LICENSE.md', 'LICENSE-MIT', 'LICENSE-APACHE', 'COPYING'):
+            for filename in ('LICENSE', 'LICENSE.txt', 'LICENSE.md', 'LICENSE-MIT', 'LICENSE-APACHE', 'LICENSE-ZLIB', 'COPYING'):
                 url = repository.replace('https://github.com/', 'https://raw.githubusercontent.com/') + '/' + commit + '/' + filename
                 try:
                     with urllib.request.urlopen(url, timeout=30) as response: content = response.read(262145)
