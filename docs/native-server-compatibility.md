@@ -9,16 +9,19 @@ All test listeners bind to loopback. No package install starts a public listener
 | --- | --- | --- |
 | Official Terraria 1.4.5.8 | Native Mono world creation, valid protocol handshake/world info, save and reload | Real player sessions and physical devices untested |
 | Pumpkin 0.2.0 (Java 26.3) | Native Android payload; protocol 777 status, clean stop, saved `level.dat` and unchanged world seed after restart | Gameplay, chunks, clients and mods untested |
-| tModLoader 2026.08.3.0 (Terraria 1.4.4.9) | Native .NET/Mono world creation, wrong-version protocol rejection, save/reload and exit pass; package preflight still being completed | Real player sessions, arbitrary mods and Steam/Workshop untested; not yet active |
-| TShock 6.2.1 (Terraria 1.4.5.8) | Startup and world creation work; valid protocol handling still fails loading Steamworks.NET type metadata | Inactive; no successful protocol/lifecycle claim |
+| tModLoader 2026.08.3.0 (Terraria 1.4.4.9) | Actual Pacman install and pinned setup, world creation, wrong-version protocol rejection, save/reload, existing world path with spaces and clean exit pass | Real player sessions and arbitrary mods untested; Steam/Workshop disabled |
+| TShock 6.2.1 (Terraria 1.4.5.8) | Startup/world creation work; protocol fails because the upstream ARM64 payload contains a reference-only Steamworks.NET assembly; official runtime asset under test | Inactive; no successful protocol/lifecycle claim |
 | Valheim | Anonymous on-phone downloader and glibc/Box64 launch reach Unity/world creation | Inactive; steamclient aborts before game-server connection |
 
 Evidence: [native server probes](https://github.com/josephluopooh/termux_repo/actions/runs/39832702343),
-[packaged tModLoader preflight](https://github.com/josephluopooh/termux_repo/actions/runs/39830760816),
-and [publication runtime tests](https://github.com/josephluopooh/termux_repo/actions/runs/39830760477).
-The latter passed the four selected application tests preceding presenterm;
-presenterm exposed a missing terminal capability response in the PTY harness.
-These runs did not publish a release. A publication requires every runtime gate.
+[packaged tModLoader preflight](https://github.com/josephluopooh/termux_repo/actions/runs/39834231957),
+and [publication runtime tests](https://github.com/josephluopooh/termux_repo/actions/runs/39834232144).
+The latter passed all five selected application tests, vanilla/Pumpkin and
+the existing core-package checks. Signing succeeded, but release creation was
+rejected because concurrent diagnostic workflow changes made the target's
+workflow files differ from current main. Publication is being rerun from a fresh
+commit with stable workflow files and the existing credentials. Every runtime
+gate remains required.
 
 ## Valheim runtime restriction
 

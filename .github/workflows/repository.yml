@@ -25,6 +25,8 @@ jobs:
             packages: cjson weechat-cjson toot
           - group: servers
             packages: pumpkin-server terraria-server
+          - group: managed-servers
+            packages: terraria-managed-support tmodloader-server
           - group: network
             packages: chisel ntfy copyparty
           - group: rainfrog

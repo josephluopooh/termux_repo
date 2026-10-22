@@ -4,10 +4,12 @@ cd "$(dirname "$0")/.."
 : "${GITHUB_REPOSITORY:?}" "${GITHUB_SHA:?}" "${GITHUB_RUN_ID:?}" "${GITHUB_RUN_ATTEMPT:?}"
 current_head=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)
 if [[ $current_head != "$GITHUB_SHA" ]]; then
-    # Diagnostic-only edits do not change packages, selection, build or runtime checks.
+    # Diagnostic script/docs edits do not change packages or their checks.
+    # Workflow edits require a fresh build: GitHub's Actions token cannot create
+    # a release for an older commit with different workflow files from main.
     # Any other changed path still blocks publication of a superseded snapshot.
     changed=$(gh api "repos/$GITHUB_REPOSITORY/compare/$GITHUB_SHA...$current_head" --jq '.files[].filename')
-    if printf '%s\n' "$changed" | grep -Ev '^(scripts/probe-native-servers[^/]*|\.github/workflows/native-server-probes\.yml|docs/native-server-compatibility\.md)$'; then
+    if printf '%s\n' "$changed" | grep -Ev '^(scripts/probe-native-servers[^/]*|docs/native-server-compatibility\.md)$'; then
         echo 'Refusing to publish a superseded package selection or implementation'
         exit 1
     fi

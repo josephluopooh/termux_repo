@@ -55,14 +55,14 @@ class Patch {
             }
             File.Move(launcherFile + ".patched", launcherFile, true);
             Console.WriteLine("Adapted TShock fallback resolver to the extracted application directory");
-            // Upstream's managed Steamworks.NET is marked AMD64 even in the
-            // Linux ARM64 archive. Mono rejects that architecture when it loads
-            // OTAPI's network type metadata. The payload is IL-only and unsigned;
+            // The checksum-pinned official NuGet runtime asset is IL-only and
+            // unsigned. Reject the non-executable reference-assembly fallback;
             // mark it AnyCPU so 64-bit ARM Mono can load the referenced types.
             // This does not enable Steam or supply a native Steam library.
             string steamFile = Path.Combine(Path.GetDirectoryName(file)!, "Steamworks.NET.dll");
             using (var steam = AssemblyDefinition.ReadAssembly(steamFile, new ReaderParameters { InMemory = true })) {
                 if (steam.Name.Name != "Steamworks.NET" || steam.Name.Version != new Version(2024, 8, 0, 0) ||
+                        steam.CustomAttributes.Any(a => a.AttributeType.FullName == "System.Runtime.CompilerServices.ReferenceAssemblyAttribute") ||
                         steam.Name.HasPublicKey || steam.MainModule.Architecture != TargetArchitecture.AMD64 ||
                         steam.MainModule.Attributes != ModuleAttributes.ILOnly)
                     throw new Exception("Unexpected Steamworks.NET managed architecture");
