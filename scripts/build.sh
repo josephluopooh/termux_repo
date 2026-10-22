@@ -11,12 +11,20 @@ mkdir -p dist
 python3 - <<'PY'
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
 import tarfile
 
 selected = set(json.loads(Path('packages.json').read_text())['packages'])
-shutil.copytree('build/output/evidence', 'dist/evidence', dirs_exist_ok=True)
+if os.environ.get('BUILD_PACKAGES'):
+    selected = set(os.environ['BUILD_PACKAGES'].split())
+group = os.environ.get('BUILD_GROUP', 'all')
+evidence = Path('dist/evidence') / group
+shutil.copytree('build/output/evidence', evidence, dirs_exist_ok=True)
+if Path('build/output/sources').exists():
+    for source in Path('build/output/sources').iterdir():
+        shutil.copy2(source, Path('dist') / source.name)
 build_only = {}
 for archive in sorted(Path('build/output').glob('*.pkg.tar.xz')):
     with tarfile.open(archive) as tar:
@@ -33,9 +41,9 @@ for archive in sorted(Path('build/output').glob('*.pkg.tar.xz')):
             'pkgbase': info['pkgbase'], 'pkgver': info['pkgver'],
             'sha256': hashlib.sha256(archive.read_bytes()).hexdigest(),
         }
-Path('dist/evidence/build-only-packages.json').write_text(
+(evidence / 'build-only-packages.json').write_text(
     json.dumps(build_only, indent=2) + '\n')
 PY
-python3 scripts/verify-packages.py dist
-cp sources.json packages.json dist/evidence/
-git rev-parse HEAD > dist/evidence/commit.txt
+python3 scripts/verify-packages.py dist --partial
+cp sources.json packages.json "dist/evidence/${BUILD_GROUP:-all}/"
+git rev-parse HEAD > "dist/evidence/${BUILD_GROUP:-all}/commit.txt"

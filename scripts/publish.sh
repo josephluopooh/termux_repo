@@ -58,6 +58,10 @@ if $signed; then
     for file in dist/termux_repo-aarch64.db{,.tar.gz} dist/termux_repo-aarch64.files{,.tar.gz} dist/repository-index.json dist/build-evidence.tar.gz; do
         gpg --batch --yes --pinentry-mode loopback --passphrase-file "$GNUPGHOME/passphrase" --local-user "$fingerprint" --detach-sign "$file"
     done
+    for source in dist/*-source.tar.gz; do
+        [[ -f $source ]] || continue
+        gpg --batch --yes --pinentry-mode loopback --passphrase-file "$GNUPGHOME/passphrase" --local-user "$fingerprint" --detach-sign "$source"
+    done
 fi
 (cd dist && find . -maxdepth 1 -type f ! -name SHA256SUMS ! -name SHA256SUMS.sig -printf '%f\n' | LC_ALL=C sort | xargs sha256sum) > /tmp/repository-SHA256SUMS
 mv /tmp/repository-SHA256SUMS dist/SHA256SUMS

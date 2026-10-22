@@ -78,6 +78,16 @@ pacman -Syu
 | `weechat-cjson` | [WeeChat with cJSON/API relay, headless support, and optional language plugins](packages/weechat-cjson/README.md). |
 | `toot` | [Mastodon CLI and terminal interface](packages/toot/README.md). |
 | `cjson` | JSON library used by WeeChat; see the [upstream documentation](https://github.com/DaveGamble/cJSON). |
+| `terraria-server` | [Official vanilla Terraria downloader and native Mono launcher](packages/terraria-server/README.md). |
+| `pumpkin-server` | [Native Android Pumpkin Minecraft server](packages/pumpkin-server/README.md). |
+| `rainfrog` | [SQLite/PostgreSQL/MySQL terminal interface](packages/rainfrog/README.md). |
+| `chisel` | [Authenticated network tunnels over HTTP](packages/chisel/README.md). |
+| `rustypaste` | [Self-hosted paste and file upload service](packages/rustypaste/README.md). |
+| `presenterm` | [Markdown presentations in the terminal](packages/presenterm/README.md). |
+| `ergo` | [IRC server with integrated bouncer features](packages/ergo/README.md). |
+| `termscp` | [Terminal remote file manager](packages/termscp/README.md). |
+| `rathole` | [NAT traversal and reverse tunnels](packages/rathole/README.md). |
+| `lazyjj` | [Terminal interface for Jujutsu](packages/lazyjj/README.md). |
 
 See [releases](https://github.com/josephluopooh/termux_repo/releases) for published
 versions and [packages.json](packages.json) for the selected package manifest.
@@ -86,5 +96,6 @@ versions and [packages.json](packages.json) for the selected package manifest.
 
 The infrastructure in `scripts/` and `.github/` is licensed under
 [Apache License 2.0](LICENSE). Packages retain their upstream licenses:
-WeeChat and toot are GPL-3.0, and cJSON is MIT. Package guides include attribution
-and upstream links.
+Package guides include licenses, attribution, upstream links and any setup-time
+downloads. Proprietary Terraria files are obtained directly from Re-Logic by
+the user's explicit setup command; they are not redistributed in this repository.

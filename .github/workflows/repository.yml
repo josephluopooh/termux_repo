@@ -13,6 +13,28 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - group: core
+            packages: cjson weechat-cjson toot
+          - group: servers
+            packages: pumpkin-server terraria-server
+          - group: go
+            packages: chisel ergo
+          - group: rainfrog
+            packages: rainfrog
+          - group: rustypaste
+            packages: rustypaste
+          - group: presenterm
+            packages: presenterm
+          - group: termscp
+            packages: termscp
+          - group: rathole
+            packages: rathole
+          - group: lazyjj
+            packages: lazyjj
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -20,27 +42,30 @@ jobs:
       - name: Build native Termux-Pacman packages
         env:
           REPO_REVISION: 1.${{ github.run_number }}.${{ github.run_attempt }}
+          BUILD_GROUP: ${{ matrix.group }}
+          BUILD_PACKAGES: ${{ matrix.packages }}
         run: bash scripts/build.sh
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         if: always()
         with:
-          name: packages-aarch64
+          name: packages-aarch64-${{ matrix.group }}
           path: dist/
           if-no-files-found: warn
           retention-days: 14
   runtime:
     needs: build
     runs-on: ubuntu-24.04-arm
-    timeout-minutes: 20
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
       - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
-          name: packages-aarch64
+          pattern: packages-aarch64-*
+          merge-multiple: true
           path: dist/
-      - name: Install and exercise WeeChat in native aarch64 Termux-Pacman
+      - name: Install and exercise packages in aarch64 Termux-Pacman
         run: |
           set -euo pipefail
           docker run --rm --user 1000:1000 \
@@ -66,7 +91,8 @@ jobs:
           persist-credentials: false
       - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
-          name: packages-aarch64
+          pattern: packages-aarch64-*
+          merge-multiple: true
           path: dist/
       - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6
         with:
@@ -79,4 +105,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO_SIGNING_KEY: ${{ secrets.REPO_SIGNING_KEY }}
           REPO_SIGNING_PASSPHRASE: ${{ secrets.REPO_SIGNING_PASSPHRASE }}
-        run: bash scripts/publish.sh
+        run: |
+          python3 scripts/verify-packages.py dist
+          bash scripts/publish.sh

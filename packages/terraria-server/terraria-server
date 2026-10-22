@@ -1,0 +1,56 @@
+#!/data/data/com.termux/files/usr/bin/python
+"""Download the unmodified official server on request; do not redistribute it."""
+import hashlib
+import os
+from pathlib import Path
+import shutil
+import sys
+import tempfile
+import urllib.request
+import zipfile
+
+VERSION = '1.4.5.8'
+URL = 'https://terraria.org/api/download/pc-dedicated-server/terraria-server-1458.zip'
+SHA256 = 'f513a4ac9789d34af766291ae217c9cd7d9472e13782a0e2b17512f70d7a8334'
+base = Path(os.environ.get('XDG_DATA_HOME', Path.home() / '.local/share')) / 'terraria-server'
+server = base / VERSION
+
+if sys.argv[1:] == ['--version']:
+    print('Official vanilla Terraria', VERSION, '(native Termux Mono launcher)')
+elif not sys.argv[1:] or sys.argv[1] in ('--help', '-h'):
+    print('terraria-server install  Download the official, unmodified Re-Logic server.\n'
+          'terraria-server run [server arguments...]  Run using native Termux Mono.\n'
+          'Worlds default to ' + str(base / 'worlds') + '\n'
+          'The proprietary server is not contained in the Pacman package.')
+elif sys.argv[1:] == ['install']:
+    if (server / '.complete').is_file():
+        print('Already installed:', server)
+        raise SystemExit(0)
+    if server.exists():
+        raise SystemExit('Incomplete installation exists; inspect it before retrying: ' + str(server))
+    base.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix='.download-', dir=base) as temporary:
+        archive = Path(temporary) / 'server.zip'
+        print('Downloading the official server directly from Re-Logic:', URL, flush=True)
+        with urllib.request.urlopen(URL, timeout=120) as source, archive.open('wb') as target:
+            shutil.copyfileobj(source, target)
+        if hashlib.file_digest(archive.open('rb'), 'sha256').hexdigest() != SHA256:
+            raise SystemExit('Official archive checksum mismatch; nothing installed.')
+        staged = Path(temporary) / 'server'
+        staged.mkdir()
+        with zipfile.ZipFile(archive) as bundle:
+            # Use Termux's native Mono runtime and framework. Never run/copy the x86-64 host.
+            for name in ('TerrariaServer.exe', 'FNA.dll', 'FNA.dll.config'):
+                (staged / name).write_bytes(bundle.read('1458/Linux/' + name))
+        (staged / '.complete').write_text(SHA256 + '\n')
+        staged.rename(server)
+    print('Installed official vanilla Terraria', VERSION, 'in', server)
+elif sys.argv[1] == 'run':
+    if not (server / '.complete').is_file():
+        raise SystemExit('Run terraria-server install first.')
+    worlds = base / 'worlds'
+    worlds.mkdir(parents=True, exist_ok=True)
+    os.execvp('mono', ['mono', '--server', str(server / 'TerrariaServer.exe'),
+                      '-savedirectory', str(worlds), *sys.argv[2:]])
+else:
+    raise SystemExit('Unknown command; see terraria-server --help.')

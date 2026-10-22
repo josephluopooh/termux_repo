@@ -1,3 +1,17 @@
 {
-  "packages": ["cjson", "weechat-cjson", "toot"]
+  "packages": [
+    "cjson",
+    "weechat-cjson",
+    "toot",
+    "pumpkin-server",
+    "terraria-server",
+    "chisel",
+    "ergo",
+    "rainfrog",
+    "rustypaste",
+    "presenterm",
+    "termscp",
+    "rathole",
+    "lazyjj"
+  ]
 }

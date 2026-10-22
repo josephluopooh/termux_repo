@@ -13,6 +13,10 @@ assert config['architecture'] == 'aarch64', 'Adding an architecture requires ABI
 assert config['android_api'] == 24
 assert config['prefix'] == '/data/data/com.termux/files/usr'
 packages = json.loads((root / 'packages.json').read_text())['packages']
+if os.environ.get('BUILD_PACKAGES'):
+    requested = os.environ['BUILD_PACKAGES'].split()
+    assert set(requested) <= set(packages), requested
+    packages = requested
 assert packages and len(packages) == len(set(packages))
 assert all(re.fullmatch(r'[a-z0-9][a-z0-9+.-]*', p) for p in packages)
 revision = os.environ.get('REPO_REVISION', '1')

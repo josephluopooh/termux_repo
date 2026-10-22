@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Check actual Pacman metadata, Android ELF ABI, and cJSON relay linkage."""
 import json
+import os
 from email.parser import BytesParser
 from pathlib import Path, PurePosixPath
 import subprocess
@@ -28,6 +29,26 @@ for archive in sorted(folder.glob('*.pkg.tar.xz')):
             path = PurePosixPath(member.name)
             assert not path.is_absolute() and '..' not in path.parts, member.name
             assert (member.name == 'data' or member.name.startswith('data/')) or member.name in ('.PKGINFO', '.BUILDINFO', '.MTREE', '.INSTALL'), member.name
+            if member.isfile():
+                stream = tar.extractfile(member)
+                if stream.read(4) == b'\x7fELF':
+                    stream.seek(0)
+                    with tempfile.NamedTemporaryFile() as elf:
+                        elf.write(stream.read())
+                        elf.flush()
+                        abi = subprocess.check_output(['readelf', '-h', '-l', '-d', elf.name], text=True)
+                    assert 'AArch64' in abi, (name, member.name, abi)
+                    assert 'libc.so.6' not in abi and 'ld-linux' not in abi, (name, member.name)
+                    if '/bin/' in member.name:
+                        assert '/system/bin/linker64' in abi, (name, member.name, abi)
+                    out = folder / 'evidence' / 'elf' / name
+                    out.mkdir(parents=True, exist_ok=True)
+                    (out / (member.name.replace('/', '_') + '.txt')).write_text(abi)
+        if name in ('terraria-server', 'tshock'):
+            assert arch == 'any' and '.INSTALL' not in tar.getnames()
+            assert not any(m.name.endswith(('.exe', '.dll', '.so')) for m in tar.getmembers())
+        if name == 'pumpkin-server':
+            assert tar.getmember('data/data/com.termux/files/usr/bin/pumpkin').mode & 0o100
         if name == 'weechat-cjson':
             assert 'cjson' in info['depend']
             assert 'weechat' in info['conflict']
@@ -79,11 +100,13 @@ for archive in sorted(folder.glob('*.pkg.tar.xz')):
                     assert not tar.extractfile(member).read(4).startswith(b'\x7fELF'), member.name
             assert not any('/site-packages/' in m.name for m in tar.getmembers())
         metadata[name] = {'filename': archive.name, **info}
-assert {'cjson', 'weechat-cjson', 'toot'} <= metadata.keys(), metadata.keys()
+required = set(os.environ.get('BUILD_PACKAGES', '').split()) if '--partial' in sys.argv else selected
+assert required <= metadata.keys(), (required, metadata.keys())
 for name, info in metadata.items():
     if name.startswith('weechat-cjson-'):
         assert any(d.startswith('weechat-cjson') for d in info['depend'])
         assert name.replace('weechat-cjson', 'weechat', 1) in info['conflict']
 (folder / 'evidence').mkdir(exist_ok=True)
-(folder / 'evidence' / 'packages.json').write_text(json.dumps(metadata, indent=2) + '\n')
+suffix = '-' + os.environ.get('BUILD_GROUP', 'all') if '--partial' in sys.argv else ''
+(folder / 'evidence' / ('packages' + suffix + '.json')).write_text(json.dumps(metadata, indent=2) + '\n')
 print('Verified:', ', '.join(metadata))
