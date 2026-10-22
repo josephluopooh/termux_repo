@@ -24,6 +24,10 @@ for p in Path('native-probe/tshock-src').rglob('*.csproj'):
     old = '<PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.0" />'
     text = text.replace(old, '<PackageReference Include="Microsoft.Data.Sqlite.Core" Version="9.0.0" />\n<PackageReference Include="SQLitePCLRaw.bundle_sqlite3" Version="2.1.10" />')
     p.write_text(text)
+launcher = Path('native-probe/tshock-src/TShockLauncher/Program.cs')
+text = launcher.read_text(encoding='utf-8-sig')
+text = text.replace('Dictionary<string, Assembly> _cache', 'AppDomain.CurrentDomain.UnhandledException += (_, e) => Console.Error.WriteLine(e.ExceptionObject);\n\nDictionary<string, Assembly> _cache')
+launcher.write_text(text)
 PY
 result=0
 dotnet publish native-probe/tshock-src/TShockLauncher -c Release -f net9.0 \
@@ -31,5 +35,50 @@ dotnet publish native-probe/tshock-src/TShockLauncher -c Release -f net9.0 \
     -o "$PWD/native-probe/tshock" 2>&1 | tee probe-evidence/tshock-build.log || result=1
 fetch 'https://github.com/tModLoader/tModLoader/releases/download/v2026.08.3.0/tModLoader.zip' native-probe/tmodloader.zip 61e865f3702b12ce4a26c5a90b9de99a12c65ffc228455eb3390ce54af1eab15
 unzip -q native-probe/tmodloader.zip -d native-probe/tmodloader
+# Build an isolated source-port experiment. Never ship this as a supported runtime.
+mkdir -p native-probe/monomod
+fetch 'https://codeload.github.com/MonoMod/MonoMod/tar.gz/1fea03f95352a70268a069e68b232c8be0c7f296' native-probe/monomod.tar.gz 1154cfaa8986aa04e7d18432172402f7fc8a84d8bf3e66f7f7357db359f1bc59
+fetch 'https://codeload.github.com/icedland/iced/tar.gz/c50f29b7bc305696895c075f3fc7719751426b12' native-probe/iced.tar.gz c5f2473db51e3ab6c48a2c4dcf099e5b29f16ef83b251c46868cb68025b1d7e7
+tar -xf native-probe/monomod.tar.gz -C native-probe/monomod --strip-components=1
+mkdir -p native-probe/monomod/external/iced
+tar -xf native-probe/iced.tar.gz -C native-probe/monomod/external/iced --strip-components=1
+python3 scripts/probe-native-servers-monomod.py native-probe/monomod
+if dotnet build native-probe/monomod/src/MonoMod.Core/MonoMod.Core.csproj -c Release -f net8.0 \
+    -p:RestoreLockedMode=false -p:MMBannedApis=false -p:EnableNETAnalyzers=false -p:DoNotAddSuffix=true \
+    2>&1 | tee probe-evidence/monomod-build.log; then
+    cp -r native-probe/tmodloader native-probe/tmodloader-patched
+    core=$(find native-probe/monomod/artifacts/bin/MonoMod.Core -path '*net8.0/MonoMod.Core.dll' -print -quit)
+    test -n "$core"
+    find native-probe/tmodloader-patched/Libraries -name MonoMod.Core.dll -exec cp "$core" '{}' \;
+    mkdir -p native-probe/detour-src
+    cat > native-probe/detour-src/detour.csproj <<'XML'
+<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings></PropertyGroup><ItemGroup><PackageReference Include="MonoMod.RuntimeDetour" Version="25.3.2" /></ItemGroup></Project>
+XML
+    cat > native-probe/detour-src/Program.cs <<'CS'
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using MonoMod.RuntimeDetour;
+using MonoMod.Core.Platforms;
+class Probe {
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    public static int Original(int value) => value < 0 ? throw new InvalidOperationException("unwind-check") : value + 1;
+    public static void Main() {
+        Console.WriteLine($"{RuntimeInformation.FrameworkDescription} {RuntimeInformation.RuntimeIdentifier} pagesize={Environment.SystemPageSize}");
+        Console.WriteLine($"MonoMod system={PlatformTriple.Current.System.Target}");
+        using (var hook = new Hook(typeof(Probe).GetMethod(nameof(Original))!, (Func<Func<int,int>,int,int>)((orig, value) => orig(value) + 10))) {
+            for (int i=0; i<1000; i++) if (Original(i) != i+11) throw new Exception("Hook/cache flush failed");
+            try { Original(-1); throw new Exception("Missing expected exception"); }
+            catch (InvalidOperationException e) when (e.Message == "unwind-check") { }
+        }
+        if (Original(7) != 8) throw new Exception("Unhook failed");
+        Console.WriteLine("PASS: 1000 ARM64 managed detours, exception propagation, unhook");
+    }
+}
+CS
+    dotnet publish native-probe/detour-src -c Release --no-self-contained -p:UseAppHost=false -o "$PWD/native-probe/detour"
+    cp "$core" native-probe/detour/MonoMod.Core.dll
+else
+    result=1
+fi
 # Only logs are uploaded. Proprietary server payloads stay in this disposable runner.
 exit "$result"

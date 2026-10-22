@@ -25,6 +25,8 @@ all gameplay features have not been exhaustively tested by this repository.
 - [Source](https://github.com/Pumpkin-MC/Pumpkin/tree/204a94ed895f041a845630d5a23c094705a0704e)
 - [Documentation](https://docs.pumpkinmc.org/)
 
-GPL-3.0. The matching source archive is included as a release asset, and upstream
-Cargo.lock records dependency sources. See build-evidence.tar.gz for exact ABI and
+GPL-3.0. The matching source archive, including locked dependency sources and
+licenses plus Cargo's offline source configuration, is included as a release
+asset. This source bundle does not add dependency packages to your repository.
+See build-evidence.tar.gz for exact ABI and
 runtime checks; those checks run in a Termux container, not on a physical phone.

@@ -24,7 +24,7 @@ jobs:
           set -uo pipefail
           mkdir -p probe-evidence
           result=0
-          for server in tshock tmodloader; do
+          for server in tshock tmodloader-patched; do
             docker run --rm --user 1000:1000 \
               -v "$PWD/native-probe:/input:ro" -v "$PWD/scripts:/tests:ro" \
               --entrypoint /data/data/com.termux/files/usr/bin/bash \

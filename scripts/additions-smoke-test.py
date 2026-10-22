@@ -181,7 +181,12 @@ with tempfile.TemporaryDirectory(prefix='termux-additions-') as temporary:
             assert len(reply) >= 3 and reply[2] == 2, reply
         process.stdin.write('exit\n'); process.stdin.flush(); process.wait(40)
         assert process.returncode == 0 and world.is_file()
-    print('PASS: official vanilla native Mono world creation, protocol reply and saved exit', flush=True)
+    # Reload the saved world as a distinct process, rather than only checking file creation.
+    with daemon(['terraria-server', 'run', '-lang', '1', '-ip', '127.0.0.1', '-port', '19108', '-noupnp', '-world', str(world)], vanilla) as process:
+        wait_port(19108, process, 120)
+        process.stdin.write('exit\n'); process.stdin.flush(); process.wait(40)
+        assert process.returncode == 0 and world.is_file()
+    print('PASS: official vanilla native Mono world creation, protocol reply, save and reload', flush=True)
 
     pumpkin = work / 'pumpkin'; pumpkin.mkdir()
     (pumpkin / 'pumpkin.toml').write_text('''allow_nether = false
