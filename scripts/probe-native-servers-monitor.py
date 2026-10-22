@@ -1,4 +1,5 @@
 """Exercise native server startup, protocol, save, and a separate reload."""
+import os
 import pathlib
 import socket
 import struct
@@ -20,16 +21,44 @@ def boot(command, name):
                     raise RuntimeError('Server exited before listening: ' + str(process.returncode))
                 try:
                     with socket.create_connection(('127.0.0.1', port), timeout=1) as client:
-                        message = b'\x01\x09Terraria0'
+                        version = os.environ.get('SERVER_PROTOCOL_VERSION', '0')
+                        tag = ('Terraria' + version).encode('ascii')
+                        message = b'\x01' + bytes([len(tag)]) + tag
                         client.sendall(struct.pack('<H', len(message) + 2) + message)
                         client.settimeout(10)
-                        reply = client.recv(4096)
-                        assert len(reply) >= 3 and reply[2] == 2, reply
+                        def packet():
+                            def exact(size):
+                                data = b''
+                                while len(data) < size:
+                                    chunk = client.recv(size - len(data)); assert chunk, data
+                                    data += chunk
+                                return data
+                            length, = struct.unpack('<H', exact(2))
+                            assert 3 <= length <= 65535, length
+                            return exact(length - 2)
+                        reply = packet()
+                        if version == '0':
+                            assert reply[0] == 2, reply
+                        else:
+                            assert reply[0] == 3, reply
+                            client.sendall(b'\x03\x00\x06')
+                            reply = packet()
+                            assert reply[0] == 7 and len(reply) > 20, reply
+                            print('PASS: valid protocol handshake and world info', flush=True)
                         break
                 except ConnectionRefusedError:
                     time.sleep(1)
             else:
                 raise RuntimeError('Server startup timed out')
+            if os.environ.get('SERVER_PROTOCOL_VERSION'):
+                # An unsupported client must get a kick without crashing the server.
+                with socket.create_connection(('127.0.0.1', port), timeout=10) as invalid:
+                    invalid.sendall(b'\x0d\x00\x01\x09Terraria0')
+                    reply = invalid.recv(4096)
+                    assert len(reply) >= 3 and reply[2] == 2, reply
+                time.sleep(1)
+                assert process.poll() is None, 'Server crashed after wrong-version packet'
+                print('PASS: wrong-version rejection remains stable', flush=True)
             process.stdin.write('exit\n'); process.stdin.flush()
             assert process.wait(60) == 0
         finally:

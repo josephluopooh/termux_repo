@@ -35,6 +35,8 @@ def collect(root, dependencies, out):
     published = {key.lower(): value for key, value in libraries.items() if value['type'] == 'package'}
     # A new or changed dependency needs an explicit notice audit.
     assert set(published) == set(EXPECTED), (sorted(published), sorted(EXPECTED))
+    pins = json.loads(Path(__file__).with_name('nuget-hashes.json').read_text(encoding='utf-8'))
+    assert set(pins) == set(EXPECTED), 'Incomplete NuGet hash pins'
     records, fetched = [], {}
     for identity in sorted(published):
         name, version = identity.split('/')
@@ -49,7 +51,11 @@ def collect(root, dependencies, out):
         digest = hashlib.sha512(archive.read_bytes()).digest()
         sha512 = base64.b64encode(digest).decode('ascii')
         expected_digest = published[identity].get('sha512', '').removeprefix('sha512-')
-        assert expected_digest and sha512 == expected_digest, (identity, 'NuGet content hash mismatch')
+        # NuGet's signed-package content hash excludes the repository signature;
+        # it is not the SHA512 of the downloaded ZIP. Pin and verify both values.
+        # content_sha512 was calculated by NuGet.Packaging.PackageArchiveReader.
+        assert sha512 == pins[identity]['archive_sha512'], (identity, 'NuGet archive hash mismatch')
+        assert expected_digest == pins[identity]['content_sha512'], (identity, 'NuGet content hash mismatch')
         target = out / identity
         target.mkdir(parents=True, exist_ok=True)
         shutil.copy2(spec, target / spec.name)
@@ -76,7 +82,8 @@ def collect(root, dependencies, out):
         notices.append({'path': 'UPSTREAM-LICENSE.txt', 'source': url, 'sha256': expected_hash})
         record = {
             'package': identity, 'license': entries.get('license'),
-            'copyright': entries.get('copyright'), 'nuget_sha512': sha512,
+            'copyright': entries.get('copyright'), 'nuget_archive_sha512': sha512,
+            'nuget_content_sha512': expected_digest,
             'notices': notices,
         }
         if name == 'monomod.core':

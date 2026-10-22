@@ -12,7 +12,9 @@ with tempfile.TemporaryDirectory(prefix='copyparty-smoke-') as directory:
     volume.mkdir()
     number = port()
     base = f'http://127.0.0.1:{number}'
-    args = command + ['-i', '127.0.0.1', '-p', str(number), '-v', str(volume) + ':/files:rw', '--http-only', '--no-ansi', '--no-thumb', '--no-crt', '-j', '1']
+    # This disposable upload test intentionally uses temporary overlay/RAM storage.
+    # Production launchers retain copyparty's default persistent-storage safety check.
+    args = command + ['--wram', '-i', '127.0.0.1', '-p', str(number), '-v', str(volume) + ':/files:rw', '--http-only', '--no-ansi', '--no-thumb', '--no-crt', '-j', '1']
     with daemon(args, work, env, 'server') as process:
         ready(number, process)
         with HTTP.open(base + '/files/', timeout=10) as response:

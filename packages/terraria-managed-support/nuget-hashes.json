@@ -1,0 +1,26 @@
+{
+  "mono.cecil/0.11.6": {
+    "archive_sha512": "HFkyJGsjyfMXaQolzj4UFtFo2IWHEGPS9gTPmX7Z6Z1BvM3Q4i1L5uSl6nKdBr2SzFQ2htu9dasBmdtg4JEvtA==",
+    "content_sha512": "f33RkDtZO8VlGXCtmQIviOtxgnUdym9xx/b1p9h91CRGOsJFxCFOFK1FDbVt1OCf1aWwYejUFa2MOQyFWTFjbA=="
+  },
+  "monomod.core/1.3.2": {
+    "archive_sha512": "LxMS3TEhi+qLlgUa5BXzcPsKyZCcSRqmoPdIDKzZOOxWXVclAuIgZkAbXuXFAuOiZTmB1aOU0NGvf+Wf1Y9m8A==",
+    "content_sha512": "/+vUQswRMkHE6jlm9kPeQJD6t0aPmEHILyf/QlLxz5E9YNNcJujF3jSqPQ06LlKmmn2NADzSB0REEWQ/vfErjA=="
+  },
+  "monomod.runtimedetour/25.3.2": {
+    "archive_sha512": "96OKMadJrmdEZRM6zqK51RfpTar+vcFoIgVdK470GBG1U+fjQJ0p9oKv/rhLUcoa30LRSAQ/XguvGp+QfblIjQ==",
+    "content_sha512": "3m1EgLezObVF9HywVUQs8PEIKO7D8psG3cTmSzYSQjriqAY5+jSTPPHFgpU+qROyJ0PR/Zxu947NsIJffrilZg=="
+  },
+  "monomod.utils/25.0.10": {
+    "archive_sha512": "hUKzqn9iAgqAth8LKKD8pMijGy3ti1tPgAjmUaM77c9/QrJ4M9rEsKksANpdk3fI6EQl+htM6M7Ae3/A4mxc5g==",
+    "content_sha512": "mmsSxO9CAtaT9st8lXDXQnp0tqfbpOdzh2DwubQogSH9zKKWR49WkLQPj3XBzimzmwxuxFyDjEBTDKSwck4D9Q=="
+  },
+  "monomod.backports/1.1.2": {
+    "archive_sha512": "crfD2bilmG472xB6WvhMNzVxcgx+qn4RcrGMnSQ4TpD0iqBeZt3613H7t2ZtHwvZF0s0YHm7EOdszluSCUbpyg==",
+    "content_sha512": "baYlNy8n8kmaNhNvqmZ/dIPOeO1r9//dG1i2WbunMWtWZ2EKtIgmXaS+ZzphzTsikkGnoD4Jwr5g0TVdpDjgpw=="
+  },
+  "monomod.ilhelpers/1.1.0": {
+    "archive_sha512": "i52woIS+tTodC47bp8+DlxXus1fE4hu4/CllEVo0dXUHeAmgTlimZ2bJ+bUEJ7SMhQf62GkXhZQWVLpr7UT29g==",
+    "content_sha512": "L2FWjhTrv7tcIxshfZ+M3OcaNr4cNw0IwiVZEgwqRnZ5QAN3+RrNJ8ZwCzwXUWyPDqooJxMcjjg8PsSYUiNBjQ=="
+  }
+}

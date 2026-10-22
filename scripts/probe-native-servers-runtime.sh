@@ -15,6 +15,10 @@ if [[ $server == vanilla-pumpkin ]]; then
     ln -s pumpkin-server "$PREFIX/bin/pumpkin"
     exec python /tests/additions-smoke-test.py
 fi
+if [[ $server == tshock* ]]; then
+    # Use MonoMod's supported ordinary-assembly generator for Mono metadata.
+    export MONOMOD_DMDType=cecil SERVER_PROTOCOL_VERSION=326
+fi
 pacman -Q "$runtime" dotnet-host libsqlite
 dotnet --info
 printf 'Android build.prop present: '; test -f /system/build.prop && echo yes || echo no

@@ -26,9 +26,33 @@ class Patch {
             foreach (var field in game.MainModule.Types.Single(t => t.FullName == "Terraria.Main").Fields
                     .Where(f => f.Name.Contains("Release") || f.Name.Contains("Version")))
                 Console.WriteLine("GAME_FIELD " + field.Name + "=" + field.Constant);
-            foreach (var logMethod in game.MainModule.Types.Single(t => t.FullName == "Terraria.NetMessage").Methods
-                    .Where(m => m.Name.Contains("LogMessageError") && m.HasBody))
-                foreach (var instruction in logMethod.Body.Instructions) Console.WriteLine("GAME_LOG_IL " + instruction);
+            // Log exception type/message before the original logger calls ToString.
+            // Mono's formatter can abort on DynamicMethod metadata, hiding the
+            // underlying protocol failure. Keep the original logger and behavior.
+            var logMethod = game.MainModule.Types.Single(t => t.FullName == "Terraria.NetMessage")
+                .Methods.Single(m => m.Name == "mfwh_LogMessageError" && m.HasBody);
+            if (logMethod.Parameters.Count != 3 || logMethod.Parameters[2].ParameterType.FullName != "System.Exception")
+                throw new Exception("Unexpected protocol logger signature");
+            var logIL = logMethod.Body.GetILProcessor();
+            var first = logMethod.Body.Instructions[0];
+            var write = game.MainModule.ImportReference(typeof(Console).GetMethod("WriteLine", new[] { typeof(string) })!);
+            foreach (var instruction in new[] {
+                Instruction.Create(OpCodes.Ldstr, "ORIGINAL_PROTOCOL_EXCEPTION"),
+                Instruction.Create(OpCodes.Call, write),
+                Instruction.Create(OpCodes.Ldarg_2),
+                Instruction.Create(OpCodes.Brfalse, first),
+                Instruction.Create(OpCodes.Ldarg_2),
+                Instruction.Create(OpCodes.Callvirt, game.MainModule.ImportReference(typeof(object).GetMethod("GetType")!)),
+                Instruction.Create(OpCodes.Callvirt, game.MainModule.ImportReference(typeof(Type).GetProperty("FullName")!.GetMethod!)),
+                Instruction.Create(OpCodes.Call, write),
+                Instruction.Create(OpCodes.Ldarg_2),
+                Instruction.Create(OpCodes.Callvirt, game.MainModule.ImportReference(typeof(Exception).GetProperty("Message")!.GetMethod!)),
+                Instruction.Create(OpCodes.Call, write)
+            }) logIL.InsertBefore(first, instruction);
+            string gameFile = Path.Combine(Path.GetDirectoryName(file)!, "OTAPI.dll");
+            game.Write(gameFile + ".patched");
+            game.Dispose();
+            File.Move(gameFile + ".patched", gameFile, true);
             var method = assembly.MainModule.Types.Single(t => t.FullName == "TerrariaApi.Server.Program")
                 .Methods.Single(m => m.Name == "Main");
             var init = method.Body.Instructions.Single(i => i.Operand is MethodReference r && r.Name == "InitialiseInternals");
