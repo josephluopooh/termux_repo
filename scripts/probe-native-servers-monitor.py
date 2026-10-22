@@ -17,7 +17,7 @@ def boot(command, name):
             end = time.monotonic() + 240
             while time.monotonic() < end:
                 if process.poll() is not None:
-                    raise RuntimeError('Server exited before listening')
+                    raise RuntimeError('Server exited before listening: ' + str(process.returncode))
                 try:
                     with socket.create_connection(('127.0.0.1', port), timeout=1) as client:
                         message = b'\x01\x09Terraria0'
@@ -39,6 +39,10 @@ def boot(command, name):
                 except subprocess.TimeoutExpired: process.kill(); process.wait()
             log.seek(0)
             print(log.read()[-18000:], flush=True)
+            if process.returncode:
+                for detail in pathlib.Path.cwd().rglob('*.log'):
+                    if detail.name != name + '.log':
+                        print('SERVER_LOG', detail, detail.read_text(errors='replace')[-5000:], flush=True)
 
 boot(args, 'native-create')
 worlds = list(pathlib.Path.cwd().rglob('*.wld'))

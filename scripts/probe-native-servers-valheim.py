@@ -21,6 +21,12 @@ with tempfile.TemporaryDirectory(prefix='valheim-native-probe-') as temporary:
     data = root / 'data/valheim-server'
     generation = json.loads((data / 'current.json').read_text())['generation']
     payload = data / generation
+    os.environ['SSL_CERT_FILE'] = '/data/data/com.termux/files/usr/etc/tls/cert.pem'
+    os.environ['BOX64_DYNAREC_STRONGMEM'] = '2'
+    os.environ['BOX64_DYNAREC_BIGBLOCK'] = '0'
+    os.environ['BOX64_DYNAREC_SAFEFLAGS'] = '2'
+    os.environ['BOX64_ROLLING_LOG'] = '1'
+    os.environ['BOX64_LOG'] = '1'
     for p in sorted(payload.rglob('*')):
         if p.is_file():
             with p.open('rb') as stream:

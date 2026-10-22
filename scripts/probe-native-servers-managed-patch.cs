@@ -38,6 +38,16 @@ class Patch {
             var reference = (MethodReference)init.Operand;
             init.OpCode = OpCodes.Nop; init.Operand = null;
             method.Body.GetILProcessor().InsertAfter(attach, Instruction.Create(OpCodes.Call, reference));
+            var error = assembly.MainModule.Types.Single(t => t.FullName == "TerrariaApi.Server.Program")
+                .Methods.Single(m => m.Name == "UnhandledException");
+            error.Body = new MethodBody(error);
+            var il = error.Body.GetILProcessor();
+            il.Append(Instruction.Create(OpCodes.Ldarg_1));
+            il.Append(Instruction.Create(OpCodes.Callvirt, assembly.MainModule.ImportReference(
+                typeof(UnhandledExceptionEventArgs).GetProperty("ExceptionObject")!.GetMethod!)));
+            il.Append(Instruction.Create(OpCodes.Call, assembly.MainModule.ImportReference(
+                typeof(Console).GetMethod("WriteLine", new[] { typeof(object) })!)));
+            il.Append(Instruction.Create(OpCodes.Ret));
         } else throw new Exception("Unknown patch mode");
         string temporary = file + ".patched";
         assembly.Write(temporary);

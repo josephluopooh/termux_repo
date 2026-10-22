@@ -167,7 +167,9 @@ def main(kind):
     assembly = installed / ('TShock.Server.dll' if kind == 'tshock' else 'tModLoader.dll')
     command = ['dotnet', str(assembly)] + (['-server'] if kind == 'tmodloader' else [])
     command += ['-savedirectory', str(state), '-world', str(state / 'worlds/world.wld'), '-worldname', 'world', '-autocreate', '1', '-noupnp', *args[1:]]
-    os.chdir(state)
+    # Upstream assembly/native resolvers also use their application directory.
+    # Explicit -savedirectory/-world keep mutable save data outside that directory.
+    os.chdir(installed)
     os.execvpe('dotnet', command, env)
 
 if __name__ == '__main__':
