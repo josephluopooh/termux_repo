@@ -15,13 +15,16 @@ All test listeners bind to loopback. No package install starts a public listener
 
 Evidence: [native TShock/tModLoader probes](https://github.com/josephluopooh/termux_repo/actions/runs/39838809186),
 [packaged TShock preflight](https://github.com/josephluopooh/termux_repo/actions/runs/39839900803),
-[packaged tModLoader preflight](https://github.com/josephluopooh/termux_repo/actions/runs/39834231957),
-and [successful signed publication](https://github.com/josephluopooh/termux_repo/actions/runs/39837654522).
-That publication contains the five selected extras, vanilla, Pumpkin and
-tModLoader alongside the existing core packages. It was independently checked
-against the existing signing key, Pacman database and previous package hashes.
-TShock passed its separate actual-package gate and is selected for the next
-complete publication; the signed release index remains authoritative.
+[combined tModLoader/TShock package preflight](https://github.com/josephluopooh/termux_repo/actions/runs/39842232426),
+and [successful signed publication](https://github.com/josephluopooh/termux_repo/actions/runs/39842232491).
+The [published snapshot](https://github.com/josephluopooh/termux_repo/releases/tag/repo-aarch64-39842232491-1) contains all five selected extras,
+vanilla, Pumpkin, tModLoader and TShock alongside the existing core packages.
+All six build groups and the complete installed-package runtime regression passed.
+Independent fresh downloads verified 71 signed files, all 17 indexed packages,
+the matching Pacman database/index, dependency notices/source material, and
+94 preserved prior package/signature assets. The public latest endpoint serves
+the same verified database and signatures. The existing signing key and policies
+remain in use. The signed release index is authoritative for availability.
 
 The earlier release-creation HTTP 403 resulted from workflow differences between
 the build's target commit and current main. A fresh build with stable workflow
