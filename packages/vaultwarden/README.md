@@ -20,7 +20,7 @@ This package is **API-only**. It deliberately ships no browser web vault and
 does not claim a tested browser UI. Compatible Bitwarden clients can use a
 custom server URL; client-version compatibility, real client encryption,
 mobile connectivity, TLS, background survival on Android and real-device
-operation remain untested. No account or actual vault data is used in CI.
+operation remain untested. No real account or actual vault data is used in CI.
 
 Set environment variables explicitly to change the defaults, for example
 `ROCKET_PORT=8223 vaultwarden`. `DATA_FOLDER` selects a different private data
@@ -43,6 +43,10 @@ process has no Java VM for Android's platform certificate verifier. An explicit
 `SSL_CERT_FILE=/absolute/path/to/roots.pem` selects an alternate PEM trust store;
 an unreadable, malformed or empty bundle fails closed. Verification is never
 disabled. This does not configure inbound HTTPS for the server.
+Name resolution uses Bionic's system resolver through Tokio, which avoids
+Hickory's Java Activity-dependent Android configuration reader. Upstream host
+and IP blocking checks and IPv4/IPv6 preference ordering remain in place; the
+package does not select an external DNS provider or alter device DNS settings.
 
 The [official 1.37.4 source](https://github.com/dani-garcia/vaultwarden/tree/1.37.4)
 is AGPL-3.0-only, pinned by SHA-256 and built with Rust 1.99.0,
@@ -69,7 +73,8 @@ updates an opaque synthetic cipher through the API, restarts the server, logs
 in again, verifies synchronization and SQLite persistence, then deletes the
 cipher. Generated test credentials, signing keys and data are removed. These
 checks also request synthetic OIDC metadata from loopback HTTPS fixtures:
-trusted certificates succeed, while untrusted roots and hostname mismatches
+trusted certificates succeed with both a literal IP and `localhost` name
+resolution, while untrusted roots and hostname mismatches
 fail before an HTTP request reaches the fixture. No real OIDC account login or
 token exchange occurs. All fixture keys are temporary. These
 tests gate publication in the native aarch64 Termux container; they are not

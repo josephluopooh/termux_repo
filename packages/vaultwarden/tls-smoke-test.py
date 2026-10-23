@@ -39,7 +39,7 @@ with tempfile.TemporaryDirectory(prefix='vaultwarden-tls-smoke-') as temporary:
                         '-addext', 'basicConstraints=critical,CA:TRUE',
                         '-addext', 'keyUsage=critical,keyCertSign,cRLSign'],
                        check=True, timeout=30, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    for name, subject in [('trusted', 'IP:127.0.0.1'), ('wrong-name', 'DNS:ci-only.invalid'),
+    for name, subject in [('trusted', 'IP:127.0.0.1,DNS:localhost'), ('wrong-name', 'DNS:ci-only.invalid'),
                           ('untrusted', 'IP:127.0.0.1')]:
         subprocess.run(['openssl', 'req', '-new', '-newkey', 'rsa:2048', '-nodes',
                         '-keyout', str(work / (name + '.key')), '-out', str(work / (name + '.csr')),
@@ -57,7 +57,12 @@ with tempfile.TemporaryDirectory(prefix='vaultwarden-tls-smoke-') as temporary:
     roots = work / 'test-roots.pem'
     roots.write_bytes((work / 'root.pem').read_bytes())
 
-    for name in ('trusted', 'untrusted', 'wrong-name'):
+    for name, certificate, hostname in (
+        ('trusted-ip', 'trusted', '127.0.0.1'),
+        ('trusted-localhost', 'trusted', 'localhost'),
+        ('untrusted', 'untrusted', '127.0.0.1'),
+        ('wrong-name', 'wrong-name', '127.0.0.1'),
+    ):
         requests = []
 
         class Handler(http.server.BaseHTTPRequestHandler):
@@ -84,9 +89,9 @@ with tempfile.TemporaryDirectory(prefix='vaultwarden-tls-smoke-') as temporary:
                 pass
 
         server = http.server.ThreadingHTTPServer(('127.0.0.1', 0), Handler)
-        issuer = f'https://127.0.0.1:{server.server_port}'
+        issuer = f'https://{hostname}:{server.server_port}'
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        context.load_cert_chain(str(work / (name + '.pem')), str(work / (name + '.key')))
+        context.load_cert_chain(str(work / (certificate + '.pem')), str(work / (certificate + '.key')))
         server.socket = context.wrap_socket(server.socket, server_side=True)
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
@@ -117,7 +122,7 @@ with tempfile.TemporaryDirectory(prefix='vaultwarden-tls-smoke-') as temporary:
                     response = error
                 with response:
                     status, body = response.status, response.read()
-                    if name == 'trusted':
+                    if name.startswith('trusted-'):
                         assert status == 307, (status, body[:800])
                         assert response.headers['Location'].startswith(issuer + '/authorize?')
                         assert '/.well-known/openid-configuration' in requests and '/jwks' in requests, requests
@@ -129,7 +134,7 @@ with tempfile.TemporaryDirectory(prefix='vaultwarden-tls-smoke-') as temporary:
                     assert response.status == 200
                 assert process.poll() is None
             print('PASS: Vaultwarden outbound TLS', name,
-                  '(metadata accepted)' if name == 'trusted' else '(certificate rejected before HTTP)')
+                  '(metadata accepted)' if name.startswith('trusted-') else '(certificate rejected before HTTP)')
         finally:
             server.shutdown()
             server.server_close()

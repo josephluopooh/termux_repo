@@ -1,0 +1,54 @@
+Android standalone DNS adaptation by termux_repo contributors, 2026-10-23.
+Use Bionic system DNS through Tokio, preserving upstream host/IP block checks
+and address ordering. Do not query Java APIs or select a public DNS provider.
+--- a/src/http_client.rs
++++ b/src/http_client.rs
+@@ -4,8 +4,9 @@
+     sync::{Arc, LazyLock, Mutex},
+     time::Duration,
+ };
+ 
++#[cfg(not(target_os = "android"))]
+ use hickory_resolver::{TokioResolver, net::runtime::TokioRuntimeProvider};
+ use regex::Regex;
+ use reqwest::{
+     Client, ClientBuilder,
+@@ -249,8 +250,9 @@
+ 
+ #[derive(Debug, Clone)]
+ enum CustomDnsResolver {
+     Default(),
++    #[cfg(not(target_os = "android"))]
+     Hickory(Arc<TokioResolver>),
+ }
+ type BoxError = Box<dyn std::error::Error + Send + Sync>;
+ 
+@@ -265,8 +267,18 @@
+     }
+ }
+ 
+ impl CustomDnsResolver {
++    #[cfg(target_os = "android")]
++    fn new() -> Arc<Self> {
++        // A standalone Termux process has no Java Activity/VM. Hickory's
++        // Android system configuration reader requires one and panics without
++        // it. Tokio uses Bionic getaddrinfo and the device's system resolver.
++        // The shared pre/post resolution host/IP checks below still apply.
++        Arc::new(Self::Default())
++    }
++
++    #[cfg(not(target_os = "android"))]
+     fn new() -> Arc<Self> {
+         TokioResolver::builder(TokioRuntimeProvider::default())
+             .and_then(|mut builder| {
+                 // Query both families; the preferred order is applied per lookup below.
+@@ -282,8 +294,9 @@
+         pre_resolve(name, enforce_block)?;
+ 
+         let results: Vec<SocketAddr> = match self {
+             Self::Default() => tokio::net::lookup_host((name, 0)).await?.collect(),
++            #[cfg(not(target_os = "android"))]
+             Self::Hickory(r) => r.lookup_ip(name).await?.iter().map(|i| SocketAddr::new(i, 0)).collect(),
+         };
+ 
+         if enforce_block {
