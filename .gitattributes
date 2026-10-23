@@ -1,3 +1,5 @@
 # Preserve verbatim upstream license texts, including their original whitespace.
 packages/*/*license-supplements/*.txt -whitespace
 packages/*/supplemental-licenses/* -whitespace
+# Unified patch context encodes an empty source line as one leading space.
+packages/*/*.patch whitespace=-blank-at-eol

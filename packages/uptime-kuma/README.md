@@ -60,16 +60,23 @@ license terms are supplied separately without inventing copyright owners.
 The release gate installs the real aarch64 package in a disposable native
 Termux-Pacman container and checks the dashboard HTML and built JavaScript,
 SQLite addon loading, synthetic account setup/login, a loopback HTTP monitor
-through UP, DOWN, and recovery, SQLite persistence, clean shutdown, and a second
-process restoring the account and resuming the monitor. Synthetic accounts and
-temporary data are deleted. No external account, webhook, or real credentials
-are used.
+through UP, DOWN, and recovery, loopback TCP connectivity, SQLite persistence,
+clean shutdown, and a second process restoring the account and resuming both
+monitors. On Android it also checks that local/remote browser tests and
+browser monitor creation return a clear unsupported error without disrupting
+HTTP monitoring. Synthetic accounts and temporary data are deleted. No
+external account, webhook, or real credentials are used.
 
 Those checks do not establish physical Android reliability. Android background
 process limits, Doze, battery restrictions, OEM behavior, browser rendering,
-and long-running monitor delivery need device testing. Optional integrations
-such as notifications, external databases, browser monitors, ICMP/ping,
-Docker, Cloudflare tunnels, and discovery are untested here. No browser,
-Docker daemon, cloudflared, or Oracle thick-mode client is bundled. SSH uses
-its JavaScript crypto fallback; Oracle's JavaScript thin mode is retained.
-The package does not automatically start at boot or change device networking.
+and long-running monitor delivery need device testing. Browser monitors
+(including remote browsers) are unsupported on Android: requests fail
+explicitly before loading Playwright or running a browser. System service
+monitors also remain unsupported, as upstream only implements Linux systemd
+and Windows services. Playwright loads lazily on other platforms so its
+platform detection cannot stop dashboard startup. Optional integrations such
+as notifications, external databases, ICMP/ping, Docker, Cloudflare tunnels,
+and discovery are untested here. No browser, Docker daemon, cloudflared, or
+Oracle thick-mode client is bundled. SSH uses its JavaScript crypto fallback;
+Oracle's JavaScript thin mode is retained. The package does not automatically
+start at boot or change device networking.

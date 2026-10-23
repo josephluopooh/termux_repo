@@ -1,0 +1,72 @@
+--- a/server/monitor-types/real-browser-monitor-type.js
++++ b/server/monitor-types/real-browser-monitor-type.js
+@@ -1,5 +1,4 @@
+ const { MonitorType } = require("./monitor-type");
+-const { chromium } = require("playwright-core");
+ const { UP, log } = require("../../src/util");
+ const { Settings } = require("../settings");
+ const childProcess = require("child_process");
+@@ -15,6 +14,18 @@
+  * @type {import ("playwright-core").Browser}
+  */
+ let browser = null;
++
++/**
++ * Keep optional Playwright initialization out of dashboard/server startup.
++ * Upstream Playwright does not support Android, including remote browsers.
++ * @returns {import("playwright-core").BrowserType} Chromium launcher
++ */
++function getChromium() {
++    if (process.platform === "android") {
++        throw new Error("Browser monitors are not supported on Android in this package.");
++    }
++    return require("playwright-core").chromium;
++}
+ 
+ let allowedList = [];
+ let lastAutoDetectChromeExecutable = null;
+@@ -76,6 +87,7 @@
+  * @returns {Promise<import ("playwright-core").Browser>} The browser
+  */
+ async function getBrowser() {
++    const chromium = getChromium();
+     if (browser && browser.isConnected()) {
+         return browser;
+     } else {
+@@ -99,6 +111,7 @@
+  * @returns {Promise<Browser>} The browser
+  */
+ async function getRemoteBrowser(remoteBrowserID, userId) {
++    const chromium = getChromium();
+     let remoteBrowser = await RemoteBrowser.get(remoteBrowserID, userId);
+     log.debug("chromium", `Using remote browser: ${remoteBrowser.name} (${remoteBrowser.id})`);
+     browser = await chromium.connect(remoteBrowser.url);
+@@ -213,6 +226,7 @@
+  * @returns {Promise<string>} Chrome version
+  */
+ async function testChrome(executablePath) {
++    const chromium = getChromium();
+     try {
+         executablePath = await prepareChromeExecutable(executablePath);
+ 
+@@ -234,6 +248,7 @@
+  * @returns {Promise<boolean>} Returns if connection worked
+  */
+ async function testRemoteBrowser(remoteBrowserURL) {
++    const chromium = getChromium();
+     try {
+         const browser = await chromium.connect(remoteBrowserURL);
+         browser.version();
+--- a/server/model/monitor.js
++++ b/server/model/monitor.js
+@@ -1629,6 +1629,10 @@
+      * @throws {Error} If validation fails
+      */
+     validate() {
++        if (process.platform === "android" && this.type === "real-browser") {
++            throw new Error("Browser monitors are not supported on Android in this package.");
++        }
++
+         if (this.interval < MIN_INTERVAL_SECOND) {
+             throw new Error(`Interval cannot be less than ${MIN_INTERVAL_SECOND} seconds`);
+         }

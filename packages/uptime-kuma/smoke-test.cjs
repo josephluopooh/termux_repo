@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const http = require('node:http');
+const net = require('node:net');
 const { spawn } = require('node:child_process');
 const { createRequire } = require('node:module');
 const root = path.resolve(process.argv[2]);
@@ -13,13 +14,15 @@ const sqlite = appRequire('@louislam/sqlite3');
 const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'uptime-kuma-ci-'));
 const data = path.join(temporary, 'data');
 const password = 'Synthetic-Only-Local-Test-42!';
-let child, client, monitorID, log = '', requests = 0, healthy = true;
+const android = process.platform === 'android';
+let child, client, monitorID, tcpMonitorID, log = '', requests = 0, tcpConnections = 0, healthy = true;
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 const target = http.createServer((req, res) => {
     requests++;
     res.writeHead(healthy ? 200 : 503, { 'Content-Type': 'text/plain' });
     res.end('synthetic localhost monitoring fixture');
 });
+const tcpTarget = net.createServer(socket => { tcpConnections++; socket.end(); });
 const listen = server => new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 async function unusedPort() {
     const s = http.createServer(); await listen(s);
@@ -87,6 +90,8 @@ async function databaseCheck() {
     const db = new sqlite.Database(path.join(data, 'kuma.db'), sqlite.OPEN_READONLY);
     const rows = await new Promise((resolve, reject) => db.all('SELECT id, name, url FROM monitor', (e, r) => e ? reject(e) : resolve(r)));
     assert(rows.some(row => row.id === monitorID && row.name === 'Synthetic HTTP monitor'));
+    assert(rows.some(row => row.id === tcpMonitorID && row.name === 'Synthetic TCP monitor'));
+    assert.equal(rows.length, 2, 'unsupported browser monitor was not stored');
     const users = await new Promise((resolve, reject) => db.all('SELECT username, password FROM user', (e, r) => e ? reject(e) : resolve(r)));
     assert.equal(users.length, 1); assert.equal(users[0].username, 'termux-ci');
     assert.notEqual(users[0].password, password);
@@ -94,6 +99,7 @@ async function databaseCheck() {
 }
 async function main() {
     await listen(target);
+    await listen(tcpTarget);
     const port = await unusedPort();
     await start(port);
     assert.equal(await ack('needSetup'), true);
@@ -101,13 +107,20 @@ async function main() {
     await ack('login', { username: 'termux-ci', password, token: '' });
     const beats = [];
     client.on('heartbeat', beat => beats.push(beat));
-    const added = await ack('add', { type: 'http', name: 'Synthetic HTTP monitor',
+    const monitor = { type: 'http', name: 'Synthetic HTTP monitor',
         url: 'http://127.0.0.1:' + target.address().port + '/health',
         method: 'GET', interval: 1, retryInterval: 1, resendInterval: 0,
         maxretries: 0, timeout: 5, maxredirects: 0, active: true,
         accepted_statuscodes: ['200-299'], notificationIDList: {},
         upsideDown: false, expiryNotification: false, ignoreTls: false,
-        kafkaProducerBrokers: [], kafkaProducerSaslOptions: {}, conditions: [], rabbitmqNodes: [] });
+        kafkaProducerBrokers: [], kafkaProducerSaslOptions: {}, conditions: [], rabbitmqNodes: [] };
+    if (android) {
+        const unsupported = /Browser monitors are not supported on Android/;
+        await assert.rejects(ack('add', { ...monitor, type: 'real-browser', name: 'Unsupported browser fixture' }), unsupported);
+        await assert.rejects(ack('testChrome', '#playwright_chromium'), unsupported);
+        await assert.rejects(ack('testRemoteBrowser', { url: 'ws://127.0.0.1:1' }), unsupported);
+    }
+    const added = await ack('add', monitor);
     monitorID = added.monitorID;
     await waitFor(() => beats.some(b => b.monitorID === monitorID && b.status === 1), 'UP heartbeat');
     healthy = false;
@@ -116,19 +129,29 @@ async function main() {
     const before = beats.length;
     await waitFor(() => beats.slice(before).some(b => b.monitorID === monitorID && b.status === 1), 'recovery heartbeat');
     assert(requests >= 3);
+    const tcpAdded = await ack('add', { ...monitor, type: 'port', name: 'Synthetic TCP monitor',
+        hostname: '127.0.0.1', port: tcpTarget.address().port });
+    tcpMonitorID = tcpAdded.monitorID;
+    await waitFor(() => beats.some(b => b.monitorID === tcpMonitorID && b.status === 1), 'TCP UP heartbeat');
+    assert(tcpConnections > 0, 'TCP monitor connected to loopback fixture');
     await stop(); await databaseCheck();
+    const connectionsBeforeRestart = tcpConnections;
     await start(port);
     assert.equal(await ack('needSetup'), false);
     await ack('login', { username: 'termux-ci', password, token: '' });
     const result = await ack('getMonitor', monitorID);
     assert.equal(result.monitor.name, 'Synthetic HTTP monitor');
+    const tcpResult = await ack('getMonitor', tcpMonitorID);
+    assert.equal(tcpResult.monitor.name, 'Synthetic TCP monitor');
     const initialRequests = requests;
     await waitFor(() => requests > initialRequests, 'monitor resumes after restart');
+    await waitFor(() => tcpConnections > connectionsBeforeRestart, 'TCP monitor resumes after restart');
     await stop(); await databaseCheck();
-    console.log('PASS: Uptime Kuma dashboard/assets, native SQLite, synthetic account login, HTTP UP/DOWN/recovery, persisted monitor/account and restart');
+    console.log('PASS: Uptime Kuma dashboard/assets, native SQLite, synthetic account login, HTTP UP/DOWN/recovery, TCP connectivity, persisted monitor/account and restart' + (android ? ', unsupported Android browser requests' : ''));
 }
 main().catch(error => { console.error(error.stack); console.error(log.slice(-20000)); process.exitCode = 1; }).finally(async () => {
     try { await stop(); } catch (e) { console.error(e); process.exitCode = 1; }
     target.closeAllConnections(); await new Promise(resolve => target.close(resolve));
+    await new Promise(resolve => tcpTarget.close(resolve));
     fs.rmSync(temporary, { recursive: true, force: true });
 });
