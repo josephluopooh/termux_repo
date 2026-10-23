@@ -1,0 +1,3 @@
+# Preserve verbatim upstream license texts, including their original whitespace.
+packages/*/*license-supplements/*.txt -whitespace
+packages/*/supplemental-licenses/* -whitespace

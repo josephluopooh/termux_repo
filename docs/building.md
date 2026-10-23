@@ -20,11 +20,11 @@ provisioning and rotation, use the [maintainer signing guide](signing.md).
    the current checks include expectations for the selected packages. In
    particular, the WeeChat Python plugin must be rebuilt with a revision bump
    when the upstream Python ABI changes.
-4. For a package change, push to `main` or run **Build and publish Pacman
-   repository** manually. Every build uses the **entire package manifest**,
-   including subpackages; adding a package requires no workflow edits and does
-   not remove existing packages. Removing a manifest entry intentionally removes
-   it from the next sync index.
+4. Add the package to a build matrix group in **Build and publish Pacman
+   repository** and add its functional test to `scripts/runtime-test.sh`.
+   Push to `main` or run the workflow manually. The combined build must cover
+   the **entire package manifest**, including subpackages. Removing a manifest
+   entry intentionally removes it from the next sync index.
 
 Only selected recipes and their subpackages are indexed. Fallback builds of
 official dependencies remain build inputs; the native runtime test resolves
@@ -90,6 +90,15 @@ pinned Termux-Pacman container. It resolves dependencies from the official
 repositories and checks WeeChat startup, the Python plugin, authenticated API
 JSON, missing-password rejection, and a WeeChat API remote connection. It also
 runs toot's offline checks.
+
+The four service additions each have a package-local functional gate: Tailscale
+exercises unauthenticated userspace proxies and persistent local preferences;
+Uptime Kuma exercises its dashboard, a synthetic account and HTTP monitor
+failure/recovery; AdGuard Home exercises high-port UDP/TCP DNS and persistent
+rules; Vaultwarden exercises synthetic account/cipher APIs and SQLite restart.
+All use disposable data and loopback services. The package verifier checks native
+addons and `libexec` binaries as well as executables in `bin`. AdGuard Home and
+Vaultwarden releases must include corresponding-source archives.
 
 To reproduce the runtime job, use the container command and pinned image from
 the [workflow](../.github/workflows/repository.yml) on a native aarch64 Docker

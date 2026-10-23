@@ -33,6 +33,14 @@ jobs:
             packages: rainfrog
           - group: presenterm
             packages: presenterm
+          - group: tailscale
+            packages: tailscale
+          - group: uptime-kuma
+            packages: uptime-kuma
+          - group: adguardhome
+            packages: adguardhome
+          - group: vaultwarden
+            packages: vaultwarden
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:

@@ -1,0 +1,19 @@
+#!/data/data/com.termux/files/usr/bin/sh
+# Packaging defaults only; the server remains the unmodified upstream program.
+set -eu
+umask 077
+: "${DATA_FOLDER:=${XDG_DATA_HOME:-$HOME/.local/share}/vaultwarden}"
+: "${ROCKET_ADDRESS:=127.0.0.1}"
+: "${ROCKET_PORT:=8222}"
+: "${DOMAIN:=http://127.0.0.1:$ROCKET_PORT}"
+: "${SIGNUPS_ALLOWED:=false}"
+: "${INVITATIONS_ALLOWED:=false}"
+: "${WEB_VAULT_ENABLED:=false}"
+: "${PUSH_ENABLED:=false}"
+: "${DISABLE_ICON_DOWNLOAD:=true}"
+# Avoid unexpectedly loading a .env from the caller's working directory.
+: "${ENV_FILE:=/dev/null}"
+export DATA_FOLDER ROCKET_ADDRESS ROCKET_PORT DOMAIN SIGNUPS_ALLOWED INVITATIONS_ALLOWED
+export WEB_VAULT_ENABLED PUSH_ENABLED DISABLE_ICON_DOWNLOAD ENV_FILE
+mkdir -p "$DATA_FOLDER"
+exec /data/data/com.termux/files/usr/libexec/vaultwarden "$@"

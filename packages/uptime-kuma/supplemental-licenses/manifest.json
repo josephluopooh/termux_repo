@@ -1,0 +1,242 @@
+[
+  {
+    "name": "@aws-sdk/credential-provider-http",
+    "version": "3.972.73",
+    "url": "https://raw.githubusercontent.com/aws/aws-sdk-js-v3/163a566ffba89915cade6109031c5892ea3193c4/LICENSE",
+    "file": "_aws-sdk_credential-provider-http-3.972.73-LICENSE",
+    "sha256": "edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d",
+    "revision_source": "HEAD"
+  },
+  {
+    "name": "@aws-sdk/credential-provider-login",
+    "version": "3.972.78",
+    "url": "https://raw.githubusercontent.com/aws/aws-sdk-js-v3/163a566ffba89915cade6109031c5892ea3193c4/LICENSE",
+    "file": "_aws-sdk_credential-provider-login-3.972.78-LICENSE",
+    "sha256": "edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d",
+    "revision_source": "HEAD"
+  },
+  {
+    "name": "@aws-sdk/nested-clients",
+    "version": "3.997.45",
+    "url": "https://raw.githubusercontent.com/aws/aws-sdk-js-v3/163a566ffba89915cade6109031c5892ea3193c4/LICENSE",
+    "file": "_aws-sdk_nested-clients-3.997.45-LICENSE",
+    "sha256": "edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d",
+    "revision_source": "HEAD"
+  },
+  {
+    "name": "@esbuild/linux-x64",
+    "version": "0.21.5",
+    "url": "https://raw.githubusercontent.com/evanw/esbuild/fc37c2fa9de2ad77476a6d4a8f1516196b90187e/LICENSE.md",
+    "file": "_esbuild_linux-x64-0.21.5-LICENSE.md",
+    "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681",
+    "revision_source": "npm gitHead"
+  },
+  {
+    "name": "@nodable/entities",
+    "version": "2.2.0",
+    "url": "https://raw.githubusercontent.com/nodable/val-parsers/1a2c08a483b5b6428f1b3d01974875c97f3b3953/LICENSE",
+    "file": "_nodable_entities-2.2.0-LICENSE",
+    "sha256": "750cb3fb6362804957ef52caaf9b5c824015be44d494637330d7cd8834d31d40",
+    "revision_source": "npm gitHead"
+  },
+  {
+    "name": "@redis/bloom",
+    "version": "5.9.0",
+    "url": "https://raw.githubusercontent.com/redis/node-redis/483fd9d16a248671f4c1e7449ca755bcbc759a90/LICENSE",
+    "file": "_redis_bloom-5.9.0-LICENSE",
+    "sha256": "a57b250a5bf03d7afe55b74063313f2adb7b00d546c0ab149a89398333fe3cc8",
+    "revision_source": "npm gitHead"
+  },
+  {
+    "name": "@redis/client",
+    "version": "5.9.0",
+    "url": "https://raw.githubusercontent.com/redis/node-redis/51bd5b0a25c89b340ed8e194d342e887fe343767/LICENSE",
+    "file": "_redis_client-5.9.0-LICENSE",
+    "sha256": "a57b250a5bf03d7afe55b74063313f2adb7b00d546c0ab149a89398333fe3cc8",
+    "revision_source": "npm gitHead"
+  },
+  {
+    "name": "@redis/json",
+    "version": "5.9.0",
+    "url": "https://raw.githubusercontent.com/redis/node-redis/f72c46ada9be857fc69f53de51432f59c389edaf/LICENSE",
+    "file": "_redis_json-5.9.0-LICENSE",
+    "sha256": "a57b250a5bf03d7afe55b74063313f2adb7b00d546c0ab149a89398333fe3cc8",
+    "revision_source": "npm gitHead"
+  },
+  {
+    "name": "@redis/search",
+    "version": "5.9.0",
+    "url": "https://raw.githubusercontent.com/redis/node-redis/7f26dfd7ca568b4ffa0b156714657ff02213228b/LICENSE",
+    "file": "_redis_search-5.9.0-LICENSE",
+    "sha256": "a57b250a5bf03d7afe55b74063313f2adb7b00d546c0ab149a89398333fe3cc8",
+    "revision_source": "npm gitHead"
+  },
+  {
+    "name": "@redis/time-series",
+    "version": "5.9.0",
+    "url": "https://raw.githubusercontent.com/redis/node-redis/cd0de0673c940c931ad5c0704a148eef88f52c2b/LICENSE",
+    "file": "_redis_time-series-5.9.0-LICENSE",
+    "sha256": "a57b250a5bf03d7afe55b74063313f2adb7b00d546c0ab149a89398333fe3cc8",
+    "revision_source": "npm gitHead"
+  },
+  {
+    "name": "@rollup/rollup-linux-x64-gnu",
+    "version": "4.63.3",
+    "url": "https://raw.githubusercontent.com/rollup/rollup/250deca2945f8817350564f7d52bab0f79175d1b/LICENSE.md",
+    "file": "_rollup_rollup-linux-x64-gnu-4.63.3-LICENSE.md",
+    "sha256": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8",
+    "revision_source": "npm gitHead"
+  },
+  {
+    "name": "undici-types",
+    "version": "5.26.5",
+    "url": "https://raw.githubusercontent.com/nodejs/undici/9197790ae0d015b40b75fd0c5cdb7420704b5272/LICENSE",
+    "file": "undici-types-5.26.5-LICENSE",
+    "sha256": "a6db8096b2707bc0102d256917d4d33f298ba36d8c3f25de067a2b5bb379db27",
+    "revision_source": "npm gitHead"
+  },
+  {
+    "name": "@vue/devtools-api",
+    "version": "6.6.4",
+    "url": "https://raw.githubusercontent.com/vuejs/vue-devtools/df6ab6bb7791a7a525a97990de73b3ea5e9a1941/LICENSE",
+    "file": "_vue_devtools-api-6.6.4-LICENSE",
+    "sha256": "050bbca6960784db52ff387271bf2ecc5cbed7cf8581b415d528a6ecb6585015",
+    "revision_source": "npm gitHead"
+  },
+  {
+    "name": "babel-runtime",
+    "version": "6.26.0",
+    "url": "https://raw.githubusercontent.com/babel/babel/ddebc2bfc42fd92ffb09114682a0f7f1d8713f06/LICENSE",
+    "file": "babel-runtime-6.26.0-LICENSE",
+    "sha256": "f533455c5981c9213689ee68bcc54fb717d8396739781b7e30c344e94323d752",
+    "revision_source": "refs/tags/v6.26.0"
+  },
+  {
+    "name": "boolbase",
+    "version": "1.0.0",
+    "url": "https://raw.githubusercontent.com/fb55/boolbase/54811f01c797a6bb1c263183ae90b7dd627e0638/LICENSE",
+    "file": "boolbase-1.0.0-LICENSE",
+    "sha256": "cdf4d87ae0a6c160227263bf4e39a0a10e30e89ae7256e0f7ac7bde0836552c6",
+    "revision_source": "HEAD"
+  },
+  {
+    "name": "cacheable-request",
+    "version": "10.2.14",
+    "url": "https://raw.githubusercontent.com/jaredwray/cacheable/b8e4f2c43d1c518c9a0bf4b1e94bf2e3c75f0a8c/LICENSE",
+    "file": "cacheable-request-10.2.14-LICENSE",
+    "sha256": "465e8da349d50d8512e4a0e9b26d2bee50392c394f17edaa3be6e0df7c2b27ad",
+    "revision_source": "HEAD"
+  },
+  {
+    "name": "favico.js",
+    "version": "0.3.10",
+    "url": "https://raw.githubusercontent.com/ejci/favico.js/f612afcbbdf54d62de3eb303fc190b3ef3b5848c/GPL-LICENSE.txt",
+    "file": "favico.js-0.3.10-GPL-LICENSE.txt",
+    "sha256": "cd56c95654693361d4def8b478368586927c377f1e229b7efb935b4511b7c77f",
+    "revision_source": "npm gitHead"
+  },
+  {
+    "name": "http_ece",
+    "version": "1.2.0",
+    "url": "https://raw.githubusercontent.com/martinthomson/encrypted-content-encoding/0562510a30819f52424724a6fd5504becacd98a1/LICENSE",
+    "file": "http_ece-1.2.0-LICENSE",
+    "sha256": "717363ac0c7f0883042868db171cfed1f4b423119249eac9bce5131291017ea8",
+    "revision_source": "npm gitHead"
+  },
+  {
+    "name": "keyv",
+    "version": "4.5.4",
+    "url": "https://raw.githubusercontent.com/jaredwray/keyv/476af181d3de6ae84bbed9f66ff3c9eaa14d0df2/LICENSE",
+    "file": "keyv-4.5.4-LICENSE",
+    "sha256": "f3a25fb846504d92627388f112f326ce91a9202e65d787d0b6ec79c96076d84d",
+    "revision_source": "HEAD"
+  },
+  {
+    "name": "redis",
+    "version": "5.9.0",
+    "url": "https://raw.githubusercontent.com/redis/node-redis/521460f4d064763cc755e0f58361363840bb1c5d/LICENSE",
+    "file": "redis-5.9.0-LICENSE",
+    "sha256": "a57b250a5bf03d7afe55b74063313f2adb7b00d546c0ab149a89398333fe3cc8",
+    "revision_source": "npm gitHead"
+  },
+  {
+    "name": "regenerator-runtime",
+    "version": "0.11.1",
+    "url": "https://raw.githubusercontent.com/facebook/regenerator/62c99a50a5b28cd007ba4154c0402f32044c3a43/LICENSE",
+    "file": "regenerator-runtime-0.11.1-LICENSE",
+    "sha256": "acacd15e10610fc0aca63c3e09ba85910c302f17f4175ec3e5bb76ab5cba0de8",
+    "revision_source": "refs/tags/regenerator-preset@0.11.1"
+  },
+  {
+    "name": "vue-qrcode",
+    "version": "1.0.1",
+    "url": "https://raw.githubusercontent.com/rx-ts/vue/8de3709bb56af07e4004f2a28ec32c684f303f95/LICENSE",
+    "file": "vue-qrcode-1.0.1-LICENSE",
+    "sha256": "6ed65e39c2aeecee17c6fe43319c07d3379c1203e6477fcb53bbfbe2880c4768",
+    "revision_source": "refs/tags/vue-qrcode@1.0.1"
+  },
+  {
+    "name": "xml-naming",
+    "version": "0.1.0",
+    "url": "https://raw.githubusercontent.com/NaturalIntelligence/xml-naming/0330d0cfa57ee483a834c474b2d0a4f0449ee81d/LICENSE",
+    "file": "xml-naming-0.1.0-LICENSE",
+    "sha256": "8e75fc0e776c62ccadb8178ece8d3daa9ba7601fb0a49b2dfb0ea9a7a5c0aa07",
+    "revision_source": "HEAD"
+  },
+  {
+    "name": "favico.js",
+    "version": "0.3.10",
+    "url": "https://raw.githubusercontent.com/ejci/favico.js/f612afcbbdf54d62de3eb303fc190b3ef3b5848c/MIT-LICENSE.txt",
+    "file": "favico.js-0.3.10-MIT-LICENSE.txt",
+    "sha256": "bf2de3222bcfb0d2d199bdbe176b2f50427e859cd5b83ef7cc3ff340dbba4b5a",
+    "revision_source": "npm gitHead; chosen MIT alternative, GPL text also retained"
+  },
+  {
+    "name": "emitter-component",
+    "version": "1.1.2",
+    "url": "https://raw.githubusercontent.com/sindresorhus/component-emitter/a5631018f6984f585b44c0ac7982b0ff9686086f/component.json",
+    "file": "emitter-component-1.1.2-component.json",
+    "sha256": "34d8c079a5427455ffa065405346d71d37602ab80f69a82e273cfcbccf0aee8f",
+    "revision_source": "npm gitHead; upstream component manifest declares MIT"
+  },
+  {
+    "name": "nostr-wasm:libsecp256k1",
+    "version": "0.1.0",
+    "url": "https://raw.githubusercontent.com/bitcoin-core/secp256k1/77af1da9f631fa622fb5b5895fd27be431432368/COPYING",
+    "file": "nostr-wasm-libsecp256k1-COPYING",
+    "sha256": "a735999c7e5649df6fcda6fb06ab97435851c392b1b93494ae8725f37441632f",
+    "revision_source": "exact submodule of nostr-wasm npm gitHead 8c65c3e1a2e5d7615f23727a882d3285c767c313"
+  },
+  {
+    "name": "standard-license-terms",
+    "version": "MIT",
+    "url": "https://raw.githubusercontent.com/spdx/license-list-data/31ba1a50e5397e00a304dbadc76531740e89ee48/text/MIT.txt",
+    "file": "standard-MIT.txt",
+    "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5",
+    "revision_source": "SPDX reference text, not a project-specific copyright statement"
+  },
+  {
+    "name": "standard-license-terms",
+    "version": "ISC",
+    "url": "https://raw.githubusercontent.com/spdx/license-list-data/31ba1a50e5397e00a304dbadc76531740e89ee48/text/ISC.txt",
+    "file": "standard-ISC.txt",
+    "sha256": "521c6f0ed8e64736684f89843d16a4df6b4b7449acbcfc6ca6630a3037ca8c53",
+    "revision_source": "SPDX reference text, not a project-specific copyright statement"
+  },
+  {
+    "name": "standard-license-terms",
+    "version": "CC0-1.0",
+    "url": "https://raw.githubusercontent.com/spdx/license-list-data/31ba1a50e5397e00a304dbadc76531740e89ee48/text/CC0-1.0.txt",
+    "file": "standard-CC0-1.0.txt",
+    "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499",
+    "revision_source": "SPDX reference text, not a project-specific copyright statement"
+  },
+  {
+    "name": "standard-license-terms",
+    "version": "CC-BY-3.0",
+    "url": "https://raw.githubusercontent.com/spdx/license-list-data/31ba1a50e5397e00a304dbadc76531740e89ee48/text/CC-BY-3.0.txt",
+    "file": "standard-CC-BY-3.0.txt",
+    "sha256": "e6bc9e9c474700b708f568bac9e5a8a9bcb2b1dad53442f5ba449fcb848b8e76",
+    "revision_source": "SPDX reference text, not a project-specific copyright statement"
+  }
+]

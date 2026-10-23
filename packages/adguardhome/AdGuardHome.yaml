@@ -1,0 +1,41 @@
+# Rootless, localhost-only defaults. No authentication is configured.
+# Configure upstream DNS and filters in the dashboard before use.
+http:
+  address: 127.0.0.1:3000
+users: []
+dns:
+  bind_hosts: [127.0.0.1]
+  port: 5353
+  # Fail closed until the user deliberately chooses an upstream resolver.
+  upstream_dns: [127.0.0.1:9]
+  bootstrap_dns: []
+  fallback_dns: []
+  use_private_ptr_resolvers: false
+  local_ptr_upstreams: []
+  hostsfile_enabled: false
+  enable_dnssec: false
+  handle_ddr: false
+  ratelimit: 0
+filters: []
+whitelist_filters: []
+user_rules: []
+filtering:
+  protection_enabled: true
+  filtering_enabled: true
+  filters_update_interval: 0
+  rewrites_enabled: true
+  rewrites: []
+  safe_search:
+    enabled: false
+  safebrowsing_enabled: false
+  parental_enabled: false
+dhcp:
+  enabled: false
+clients:
+  runtime_sources:
+    whois: false
+    arp: false
+    rdns: false
+    dhcp: false
+    hosts: false
+schema_version: 34

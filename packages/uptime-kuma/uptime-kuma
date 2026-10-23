@@ -1,0 +1,11 @@
+#!@TERMUX_PREFIX@/bin/sh
+set -eu
+umask 077
+export UPTIME_KUMA_HOST="${UPTIME_KUMA_HOST:-127.0.0.1}"
+export UPTIME_KUMA_PORT="${UPTIME_KUMA_PORT:-3001}"
+export UPTIME_KUMA_CHECK_UPDATE="${UPTIME_KUMA_CHECK_UPDATE:-0}"
+export DATA_DIR="${DATA_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/uptime-kuma}"
+export NODE_ENV=production
+mkdir -p "$DATA_DIR"
+cd @TERMUX_PREFIX@/lib/uptime-kuma
+exec @TERMUX_PREFIX@/bin/node server/server.js "$@"

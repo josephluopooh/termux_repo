@@ -30,7 +30,7 @@ HOME="$work/toot-home" XDG_CONFIG_HOME="$work/toot-home" toot --help
 HOME="$work/toot-home" XDG_CONFIG_HOME="$work/toot-home" toot tui --help
 python -IBS /tests/toot-smoke-test.py /data/data/com.termux/files/usr/lib/toot
 python /tests/additions-smoke-test.py
-for application in chisel ntfy copyparty rainfrog presenterm; do
+for application in chisel ntfy copyparty rainfrog presenterm tailscale uptime-kuma adguardhome vaultwarden; do
     python "/recipes/$application/smoke-test.py"
 done
 python /tests/managed-server-smoke-test.py

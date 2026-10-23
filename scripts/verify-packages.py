@@ -39,10 +39,16 @@ for archive in sorted(folder.glob('*.pkg.tar.xz')):
                         abi = subprocess.check_output(['readelf', '-h', '-l', '-d', elf.name], text=True)
                     assert 'AArch64' in abi, (name, member.name, abi)
                     assert 'libc.so.6' not in abi and 'ld-linux' not in abi, (name, member.name)
-                    if '/bin/' in member.name:
+                    if name == 'uptime-kuma':
+                        assert member.name.endswith('/node_sqlite3.node'), member.name
+                        assert 'Shared library: [libsqlite3.so]' in abi, abi
+                        assert 'Shared library: [libc++_shared.so]' in abi, abi
+                    if '/bin/' in member.name or '/libexec/' in member.name:
                         assert '/system/bin/linker64' in abi, (name, member.name, abi)
-                        if name in ('ntfy', 'rainfrog'):
+                        if name in ('ntfy', 'rainfrog', 'vaultwarden'):
                             assert 'Shared library: [libsqlite3.so]' in abi, (name, abi)
+                        if name == 'vaultwarden':
+                            assert 'Shared library: [libssl.so' in abi and 'Shared library: [libcrypto.so' in abi, abi
                         if name == 'presenterm':
                             assert 'Shared library: [libonig.so]' in abi, abi
                     out = folder / 'evidence' / 'elf' / name
@@ -63,9 +69,40 @@ for archive in sorted(folder.glob('*.pkg.tar.xz')):
         if name == 'pumpkin-server':
             assert tar.getmember('data/data/com.termux/files/usr/bin/pumpkin-server').mode & 0o100
             assert tar.getmember('data/data/com.termux/files/usr/bin/pumpkin').linkname == 'pumpkin-server'
-        if name in ('chisel', 'ntfy', 'rainfrog', 'presenterm'):
+        if name in ('chisel', 'ntfy', 'rainfrog', 'presenterm', 'tailscale', 'uptime-kuma', 'adguardhome', 'vaultwarden'):
             manifest = 'data/data/com.termux/files/usr/share/doc/' + name + '/dependency-licenses/manifest.json'
             assert json.loads(tar.extractfile(manifest).read()), name
+        if name in ('tailscale', 'uptime-kuma', 'adguardhome', 'vaultwarden'):
+            assert arch == 'aarch64' and '.INSTALL' not in tar.getnames(), name
+            prefix = 'data/data/com.termux/files/usr/'
+            assert tar.getmember(prefix + 'share/doc/' + name + '/README.md').isfile()
+            assert 'ca-certificates' in info['depend'], name
+        if name == 'tailscale':
+            for binary in ('bin/tailscale', 'libexec/tailscaled'):
+                assert tar.extractfile(prefix + binary).read(4) == b'\x7fELF'
+            assert '--tun=userspace-networking' in tar.extractfile(prefix + 'bin/tailscaled').read().decode()
+        if name == 'vaultwarden':
+            assert {'libsqlite', 'openssl'} <= set(info['depend'])
+            assert tar.extractfile(prefix + 'libexec/vaultwarden').read(4) == b'\x7fELF'
+            launcher = tar.extractfile(prefix + 'bin/vaultwarden').read().decode()
+            assert 'ROCKET_ADDRESS:=127.0.0.1' in launcher and 'SIGNUPS_ALLOWED:=false' in launcher
+            assert 'WEB_VAULT_ENABLED:=false' in launcher
+            assert not any('/web-vault/' in m.name for m in tar.getmembers())
+        if name == 'uptime-kuma':
+            assert {'nodejs-lts', 'libsqlite', 'libc++'} <= set(info['depend'])
+            addon = prefix + 'lib/uptime-kuma/node_modules/@louislam/sqlite3/lib/binding/napi-v6-android-arm64/node_sqlite3.node'
+            assert tar.extractfile(addon).read(4) == b'\x7fELF'
+            assert [m.name for m in tar.getmembers() if m.name.endswith('.node')] == [addon]
+            assert tar.extractfile(prefix + 'lib/uptime-kuma/dist/index.html').read()
+            assert json.loads(tar.extractfile(prefix + 'share/doc/uptime-kuma/package-lock.json').read())['lockfileVersion'] >= 2
+        if name == 'adguardhome':
+            assert tar.extractfile(prefix + 'libexec/adguardhome/AdGuardHome').read(4) == b'\x7fELF'
+            defaults = tar.extractfile(prefix + 'share/adguardhome/AdGuardHome.yaml').read().decode()
+            assert 'address: 127.0.0.1:3000' in defaults and 'port: 5353' in defaults
+            assert 'bind_hosts: [127.0.0.1]' in defaults
+            assert json.loads(tar.extractfile(prefix + 'share/doc/adguardhome/client-licenses/manifest.json').read())
+        if name in ('adguardhome', 'vaultwarden'):
+            assert any(folder.glob(name + '-*-source.tar.gz')), f'Missing corresponding source for {name}'
         if name == 'copyparty':
             assert arch == 'any' and '.INSTALL' not in tar.getnames()
             assert not any('/site-packages/' in m.name for m in tar.getmembers())

@@ -87,9 +87,12 @@ pacman -Syu
 | `copyparty` | [File server with its browser interface](packages/copyparty/README.md). |
 | `rainfrog` | [Database terminal interface](packages/rainfrog/README.md). |
 | `presenterm` | [Markdown slides in the terminal](packages/presenterm/README.md). |
+| `tailscale` | [Native userspace networking; full-device VPN limitations](packages/tailscale/README.md). |
+| `uptime-kuma` | [Experimental native uptime dashboard and monitoring](packages/uptime-kuma/README.md). |
+| `adguardhome` | [DNS filtering server with rootless high-port defaults](packages/adguardhome/README.md). |
+| `vaultwarden` | [Localhost password manager API server; browser vault excluded](packages/vaultwarden/README.md). |
 
-The owner selected these five additional applications. Other shortlist recipes
-remain inactive under `candidates/`. Valheim is also requested; its remaining
+Other shortlist recipes remain inactive under `candidates/`. Valheim is also requested; its remaining
 [runtime restriction](docs/native-server-compatibility.md) keeps it outside
 the publication manifest. `terraria-managed-support` is an application-local
 dependency for tModLoader and TShock, using the official Termux .NET runtimes.

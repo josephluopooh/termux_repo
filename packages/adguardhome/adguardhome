@@ -1,0 +1,13 @@
+#!/data/data/com.termux/files/usr/bin/sh
+set -eu
+# Foreground operation; do not install an OS service or alter Android networking.
+umask 077
+state=${ADGUARDHOME_WORK_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/adguardhome}
+case "$state" in /*) ;; *) echo 'ADGUARDHOME_WORK_DIR must be absolute' >&2; exit 2;; esac
+mkdir -p "$state"
+config="$state/AdGuardHome.yaml"
+if [ ! -e "$config" ]; then
+    cp /data/data/com.termux/files/usr/share/adguardhome/AdGuardHome.yaml "$config"
+fi
+exec /data/data/com.termux/files/usr/libexec/adguardhome/AdGuardHome \
+    --no-check-update --no-etc-hosts --work-dir "$state" --config "$config" "$@"

@@ -12,6 +12,10 @@
     "presenterm",
     "terraria-managed-support",
     "tmodloader-server",
-    "tshock-server"
+    "tshock-server",
+    "tailscale",
+    "uptime-kuma",
+    "adguardhome",
+    "vaultwarden"
   ]
 }

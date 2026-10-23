@@ -1,0 +1,16 @@
+#!/data/data/com.termux/files/usr/bin/sh
+set -eu
+umask 077
+export SSL_CERT_FILE="${SSL_CERT_FILE:-/data/data/com.termux/files/usr/etc/tls/cert.pem}"
+case "${1:-}" in
+    --help|-h|--version|-version)
+        exec /data/data/com.termux/files/usr/libexec/tailscaled "$@"
+        ;;
+esac
+state_home=${XDG_STATE_HOME:-"$HOME/.local/state"}
+mkdir -p "$state_home/tailscale"
+exec /data/data/com.termux/files/usr/libexec/tailscaled \
+    --tun=userspace-networking \
+    --statedir="$state_home/tailscale" \
+    --socket="${TMPDIR:-/data/data/com.termux/files/usr/tmp}/tailscaled.sock" \
+    --no-logs-no-support "$@"

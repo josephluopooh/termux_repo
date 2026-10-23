@@ -1,0 +1,8 @@
+--- a/server/check-version.js
++++ b/server/check-version.js
+@@ -21,3 +21,4 @@
+-        if ((await setting("checkUpdate")) === false) {
++        // Pacman owns this installation; update hints are opt-in.
++        if (process.env.UPTIME_KUMA_CHECK_UPDATE !== "1" || (await setting("checkUpdate")) === false) {
+             return;
+         }

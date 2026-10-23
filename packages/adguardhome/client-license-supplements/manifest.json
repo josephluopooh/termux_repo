@@ -1,0 +1,38 @@
+[
+  {
+    "package": "popper.js",
+    "url": "https://raw.githubusercontent.com/FezVrasta/popper.js/696f521e3e515cab2aec6850e2386800099bb7b2/LICENSE.md",
+    "sha256": "2961310ed05cd9373a08b8191c071425a7fede0ca5d807ca38fa5f5f61c5b834",
+    "file": "popper.js.txt"
+  },
+  {
+    "package": "react-select",
+    "url": "https://raw.githubusercontent.com/JedWatson/react-select/1d9f5c8335eff27ec8be71de588528f552f422f9/LICENSE",
+    "sha256": "0c1c24dcc129cb0c02ee9803cfa7a50061c236a3b59b36a714c27f3ade66d7be",
+    "file": "react-select.txt"
+  },
+  {
+    "package": "to-camel-case",
+    "url": "https://raw.githubusercontent.com/ianstormtaylor/to-camel-case/5edce501434cb817fc49cb5c1085084e6e7088a8/Readme.md",
+    "sha256": "1b37a43e0a438af38cf2d6858b83058d4de8e25ec946f663a0964c900485cd8f",
+    "file": "to-camel-case.txt"
+  },
+  {
+    "package": "to-no-case",
+    "url": "https://raw.githubusercontent.com/ianstormtaylor/to-no-case/9d93bfe6c86b73bcd93d86c17d2ea28f164a967a/Readme.md",
+    "sha256": "d25c074282ce074cff242686dfc3f9e9c3b2c1e7cbbcc1069bbb41d2117fbc84",
+    "file": "to-no-case.txt"
+  },
+  {
+    "package": "to-space-case",
+    "url": "https://raw.githubusercontent.com/ianstormtaylor/to-space-case/aa68213d1211745ce7c6c725ba072e6b13bef640/Readme.md",
+    "sha256": "d3ae60527ccb836238b10edcd65b0ed2cd870a52c7a2785b7710dae2efa23e5b",
+    "file": "to-space-case.txt"
+  },
+  {
+    "package": "babel-plugin-syntax-jsx",
+    "url": "https://raw.githubusercontent.com/babel/babel/12f9cd082614945b793493d9f341fd065b0f9497/LICENSE",
+    "file": "babel-plugin-syntax-jsx.txt",
+    "sha256": "b968fe4e72ec5eb4d9968797de86ae30fe0835a43612d4cbae433559ed2487de"
+  }
+]
