@@ -48,7 +48,9 @@ for archive in sorted(folder.glob('*.pkg.tar.xz')):
                         if name in ('ntfy', 'rainfrog', 'vaultwarden'):
                             assert 'Shared library: [libsqlite3.so]' in abi, (name, abi)
                         if name == 'vaultwarden':
-                            assert 'Shared library: [libssl.so' in abi and 'Shared library: [libcrypto.so' in abi, abi
+                            # SQLite-only Vaultwarden uses OpenSSL for RSA;
+                            # outbound TLS uses Rustls and need not link libssl.
+                            assert 'Shared library: [libcrypto.so' in abi, abi
                         if name == 'presenterm':
                             assert 'Shared library: [libonig.so]' in abi, abi
                     out = folder / 'evidence' / 'elf' / name

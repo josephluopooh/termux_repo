@@ -238,5 +238,15 @@
     "file": "standard-CC-BY-3.0.txt",
     "sha256": "e6bc9e9c474700b708f568bac9e5a8a9bcb2b1dad53442f5ba449fcb848b8e76",
     "revision_source": "SPDX reference text, not a project-specific copyright statement"
+  },
+  {
+    "name": "Node API and libuv headers",
+    "version": "24.18.0",
+    "url": "https://nodejs.org/dist/v24.18.0/node-v24.18.0-linux-x64.tar.xz",
+    "archive_sha256": "55aa7153f9d88f28d765fcdad5ae6945b5c0f98a36881703817e4c450fa76742",
+    "archive_member": "node-v24.18.0-linux-x64/LICENSE",
+    "file": "node-24.18.0-header-notices-LICENSE",
+    "sha256": "148eacf7863ef4329224a29398623077200a27194aa075569faf4a0a85566ca5",
+    "revision_source": "Checksum-verified toolkit already pinned by Termux framework; contains Node and libuv notices"
   }
 ]

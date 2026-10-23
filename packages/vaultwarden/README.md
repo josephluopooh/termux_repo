@@ -36,6 +36,14 @@ settings. Exposing a password manager beyond localhost requires your own TLS,
 authentication, backup and network configuration; the package changes none of
 these settings and does not deploy a service.
 
+Outbound HTTPS uses the official Termux CA bundle at
+`$PREFIX/etc/tls/cert.pem`, with Rustls certificate chain and hostname checks.
+The Android source patch selects these PEM roots because a standalone Termux
+process has no Java VM for Android's platform certificate verifier. An explicit
+`SSL_CERT_FILE=/absolute/path/to/roots.pem` selects an alternate PEM trust store;
+an unreadable, malformed or empty bundle fails closed. Verification is never
+disabled. This does not configure inbound HTTPS for the server.
+
 The [official 1.37.4 source](https://github.com/dani-garcia/vaultwarden/tree/1.37.4)
 is AGPL-3.0-only, pinned by SHA-256 and built with Rust 1.99.0,
 `--no-default-features --features sqlite_system --profile release-low` for
@@ -48,6 +56,11 @@ Reproduce the Android build with this repository's pinned Termux framework and
 builder as described in [building](../../docs/building.md), using the included
 `termux-packaging` recipe. The official dynamic Termux libraries remain system
 dependencies.
+Pear 0.2.9, pear_codegen 0.2.9 and stable-pattern 0.1.0 declare
+`MIT OR Apache-2.0` but omit license files at their exact source revisions.
+This distribution selects their Apache-2.0 option and retains the standard
+license text, upstream manifests, author declarations and revision evidence;
+it does not represent the standard text as an upstream notice.
 
 `python packages/vaultwarden/smoke-test.py` runs only with temporary directories
 and loopback high ports. It checks default registration rejection and API
@@ -55,5 +68,9 @@ authentication, creates a synthetic `.invalid` account, logs in, stores and
 updates an opaque synthetic cipher through the API, restarts the server, logs
 in again, verifies synchronization and SQLite persistence, then deletes the
 cipher. Generated test credentials, signing keys and data are removed. These
+checks also request synthetic OIDC metadata from loopback HTTPS fixtures:
+trusted certificates succeed, while untrusted roots and hostname mismatches
+fail before an HTTP request reaches the fixture. No real OIDC account login or
+token exchange occurs. All fixture keys are temporary. These
 tests gate publication in the native aarch64 Termux container; they are not
 physical Android hardware or end-to-end Bitwarden client tests.

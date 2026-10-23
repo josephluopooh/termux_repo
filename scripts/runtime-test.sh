@@ -4,7 +4,8 @@ set -euo pipefail
 # Keep the image's existing signature policy: local build artifacts are allowed
 # by its LocalFileSigLevel=Optional; signed upstream databases remain required.
 pacman -Syu --noconfirm
-pacman -S --noconfirm binutils
+# openssl-tool creates disposable loopback TLS fixtures for the Vaultwarden gate.
+pacman -S --noconfirm binutils openssl-tool
 pacman -U --noconfirm /packages/*.pkg.tar.xz
 pacman -Q cjson weechat-cjson toot python ca-certificates
 weechat-headless --version

@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import sqlite3
+import subprocess
 import sys
 import tempfile
 import urllib.error
@@ -138,3 +139,5 @@ with tempfile.TemporaryDirectory(prefix='vaultwarden-smoke-') as temporary:
     print('PASS: restart preserves synthetic account/cipher and signing key; login, sync, deletion and closed registration')
 
 print('PASS: Vaultwarden synthetic API/storage/restart test; all temporary account data removed')
+subprocess.run([sys.executable, str(Path(__file__).with_name('tls-smoke-test.py')), executable],
+               check=True, timeout=180)

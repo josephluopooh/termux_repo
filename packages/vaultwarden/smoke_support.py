@@ -16,7 +16,12 @@ def port():
         return sock.getsockname()[1]
 
 def environment(work):
-    env = dict(os.environ)
+    # Preserve runtime plumbing, never a caller's Vaultwarden configuration,
+    # database paths, SMTP/OIDC credentials or server signing-key locations.
+    env = {key: os.environ[key] for key in (
+        'PATH', 'LD_LIBRARY_PATH', 'LD_PRELOAD', 'TMPDIR', 'TMP', 'TEMP',
+        'PREFIX', 'ANDROID_ROOT', 'ANDROID_DATA', 'LANG', 'LC_ALL', 'TZ',
+    ) if key in os.environ}
     # Child processes must not read or write the user's real configuration.
     for variable, name in [('HOME', 'home'), ('XDG_CONFIG_HOME', 'config'), ('XDG_DATA_HOME', 'data'), ('XDG_CACHE_HOME', 'cache')]:
         path = work / name

@@ -52,7 +52,9 @@ termux_step_make_install() {
     # cargo vendor emits an absolute path when given one; make the archive usable elsewhere.
     sed -i "s|directory = \"$source/vendor\"|directory = \"vendor\"|" "$source/.cargo/config.toml"
     cp "$TERMUX_PKG_BUILDER_DIR/build.sh" "$TERMUX_PKG_BUILDER_DIR/vaultwarden" \
-        "$TERMUX_PKG_BUILDER_DIR/README.md" "$TERMUX_PKG_BUILDER_DIR/"*.py "$source/termux-packaging/"
+        "$TERMUX_PKG_BUILDER_DIR/README.md" "$TERMUX_PKG_BUILDER_DIR/"*.py \
+        "$TERMUX_PKG_BUILDER_DIR/"*.patch "$source/termux-packaging/"
+    cp -R "$TERMUX_PKG_BUILDER_DIR/license-texts" "$source/termux-packaging/"
     tar -czf "$TERMUX_SCRIPTDIR/output/sources/vaultwarden-${TERMUX_PKG_VERSION}-source.tar.gz" \
         -C "$TERMUX_PKG_TMPDIR" "$(basename "$source")"
 }

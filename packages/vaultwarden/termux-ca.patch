@@ -1,0 +1,28 @@
+Android adaptation by termux_repo contributors, 2026-10-23.
+Use the official Termux CA bundle for standalone processes without an Android
+Java VM. Keep Rustls chain and hostname verification; fail closed on bad roots.
+--- a/src/http_client.rs
++++ b/src/http_client.rs
+@@ -58,4 +58,21 @@
+-    Client::builder()
++    let builder = Client::builder();
++    #[cfg(target_os = "android")]
++    let builder = {
++        // Termux is a standalone Bionic process, without rustls-platform-
++        // verifier's Java VM. Use Termux's maintained CA bundle instead.
++        let path = std::env::var_os("SSL_CERT_FILE")
++            .map(std::path::PathBuf::from)
++            .unwrap_or_else(|| "/data/data/com.termux/files/usr/etc/tls/cert.pem".into());
++        let pem = std::fs::read(&path).expect("Cannot read Termux TLS CA bundle");
++        let roots = reqwest::Certificate::from_pem_bundle(&pem)
++            .expect("Cannot parse Termux TLS CA bundle");
++        assert!(!roots.is_empty(), "Termux TLS CA bundle is empty");
++        // Explicit roots select Rustls WebPKI verification instead of JNI.
++        // Certificate chain and server-name checks both remain enabled.
++        builder.tls_certs_only(roots)
++    };
++
++    builder
+         .default_headers(headers)
+         .redirect(redirect_policy)
+         .dns_resolver(CustomDns::instance(enforce_block))

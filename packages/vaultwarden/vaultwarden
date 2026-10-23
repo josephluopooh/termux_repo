@@ -1,5 +1,5 @@
 #!/data/data/com.termux/files/usr/bin/sh
-# Packaging defaults only; the server remains the unmodified upstream program.
+# Packaging defaults; the source build includes the documented Android CA patch.
 set -eu
 umask 077
 : "${DATA_FOLDER:=${XDG_DATA_HOME:-$HOME/.local/share}/vaultwarden}"

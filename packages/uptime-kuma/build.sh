@@ -7,6 +7,9 @@ TERMUX_PKG_VERSION="2.5.7"
 TERMUX_PKG_SRCURL="https://codeload.github.com/louislam/uptime-kuma/tar.gz/refs/tags/${TERMUX_PKG_VERSION}"
 TERMUX_PKG_SHA256=501371f8f3a39bced0a8063119ec5a4d9afacf46a338f61cab66a518798de8ae
 TERMUX_PKG_DEPENDS="nodejs-lts, libsqlite, libc++, ca-certificates"
+# Node is a runtime requirement, not a target build input. N-API headers are
+# portable and available in the checksum-pinned build-host toolkit below.
+TERMUX_PKG_ANTI_BUILD_DEPENDS="nodejs-lts"
 TERMUX_PKG_BUILD_IN_SRC=true
 TERMUX_PKG_AUTO_UPDATE=false
 TERMUX_PKG_EXCLUDED_ARCHES="arm i686 x86_64"
@@ -14,6 +17,16 @@ TERMUX_PKG_EXCLUDED_ARCHES="arm i686 x86_64"
 termux_step_pre_configure() {
     termux_setup_nodejs
     export npm_config_cache="$TERMUX_PKG_CACHEDIR/npm"
+    local toolkit_headers="$(dirname "$(command -v node)")/../include/node"
+    _KUMA_NODE_HEADERS="$TERMUX_PKG_TMPDIR/node-api-headers"
+    mkdir -p "$_KUMA_NODE_HEADERS"
+    # Copy only portable N-API/libuv declarations. Never expose host V8,
+    # config.gypi, OpenSSL configuration, libraries, or executable code to CXX.
+    cp "$toolkit_headers"/{node_api,js_native_api,js_native_api_types,node_api_types,uv}.h \
+        "$_KUMA_NODE_HEADERS/"
+    cp -a "$toolkit_headers/uv" "$_KUMA_NODE_HEADERS/"
+    (cd "$_KUMA_NODE_HEADERS" && find . -type f -print0 | sort -z | xargs -0 sha256sum) \
+        > "$TERMUX_PKG_TMPDIR/node-api-headers.sha256"
 }
 termux_step_configure() { :; }
 termux_step_make() {
@@ -31,10 +44,11 @@ termux_step_make() {
     local addon="$sqlite/lib/binding/napi-v6-android-arm64/node_sqlite3.node"
     mkdir -p "$(dirname "$addon")"
     # N-API 6 is stable across Node releases. These are the exact four sources
-    # in upstream binding.gyp; reuse official Node headers and shared SQLite.
+    # in upstream binding.gyp; the target compiler selects Android libc/libuv
+    # declarations. Node/libuv symbols resolve from the installed Node runtime.
     "$CXX" $CPPFLAGS $CXXFLAGS -std=c++17 -fPIC -shared \
         -DNAPI_VERSION=6 -DNAPI_DISABLE_CPP_EXCEPTIONS=1 \
-        -I"$TERMUX_PREFIX/include/node" -Inode_modules/node-addon-api \
+        -I"$_KUMA_NODE_HEADERS" -Inode_modules/node-addon-api \
         "$sqlite/src/backup.cc" "$sqlite/src/database.cc" \
         "$sqlite/src/node_sqlite3.cc" "$sqlite/src/statement.cc" \
         $LDFLAGS -lsqlite3 -o "$addon"
@@ -46,6 +60,7 @@ termux_step_make_install() {
     cp -a server src db extra dist node_modules package.json package-lock.json "$private/"
     cp -a "$TERMUX_PKG_TMPDIR/notices" "$doc/dependency-licenses"
     install -Dm600 package-lock.json "$doc/package-lock.json"
+    install -Dm600 "$TERMUX_PKG_TMPDIR/node-api-headers.sha256" "$doc/node-api-headers.sha256"
     install -Dm600 "$TERMUX_PKG_BUILDER_DIR/README.md" "$doc/README.md"
     sed "s|@TERMUX_PREFIX@|$TERMUX_PREFIX|g" "$TERMUX_PKG_BUILDER_DIR/uptime-kuma" > "$TERMUX_PREFIX/bin/uptime-kuma"
     chmod 700 "$TERMUX_PREFIX/bin/uptime-kuma"
