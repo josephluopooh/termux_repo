@@ -4,9 +4,9 @@ A general-purpose **Pacman repository for Termux**, built by GitHub Actions and
 hosted as complete, signed GitHub Release snapshots.
 
 [Releases](https://github.com/josephluopooh/termux_repo/releases)
-路 [Builds](https://github.com/josephluopooh/termux_repo/actions/workflows/repository.yml)
-路 [Build and contribution guide](docs/building.md)
-路 [Maintainer signing guide](docs/signing.md)
+| [Builds](https://github.com/josephluopooh/termux_repo/actions/workflows/repository.yml)
+| [Build and contribution guide](docs/building.md)
+| [Maintainer signing guide](docs/signing.md)
 
 ## Compatibility
 
