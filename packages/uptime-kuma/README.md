@@ -17,7 +17,8 @@ Ctrl-C. Start again with `uptime-kuma` to resume the saved monitors.
 
 Data lives in `${XDG_DATA_HOME:-$HOME/.local/share}/uptime-kuma`, separate from
 the Pacman-owned application. `DATA_DIR`, `UPTIME_KUMA_HOST`, and
-`UPTIME_KUMA_PORT` override those defaults. The launcher defaults to localhost;
+`UPTIME_KUMA_PORT` override those defaults. A relative `DATA_DIR` is resolved
+against the directory from which you start the launcher. The launcher defaults to localhost;
 choosing a non-loopback host exposes the setup/dashboard service. Use suitable
 authentication and HTTPS before making it reachable elsewhere. The launcher
 uses a private umask. Updating/removing the package does not erase user data.

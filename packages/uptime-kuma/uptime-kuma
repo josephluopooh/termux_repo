@@ -7,5 +7,8 @@ export UPTIME_KUMA_CHECK_UPDATE="${UPTIME_KUMA_CHECK_UPDATE:-0}"
 export DATA_DIR="${DATA_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/uptime-kuma}"
 export NODE_ENV=production
 mkdir -p "$DATA_DIR"
+# Resolve relative overrides before changing into the Pacman-owned application.
+DATA_DIR=$(CDPATH= cd -- "$DATA_DIR" && pwd -P)
+export DATA_DIR
 cd @TERMUX_PREFIX@/lib/uptime-kuma
 exec @TERMUX_PREFIX@/bin/node server/server.js "$@"

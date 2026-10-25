@@ -47,12 +47,15 @@ const ack = (event, ...args) => new Promise((resolve, reject) => {
     });
 });
 async function start(port) {
-    const env = { ...process.env, DATA_DIR: data, UPTIME_KUMA_HOST: '127.0.0.1',
+    // Exercise the installed launcher's relative override from outside its
+    // Pacman-owned directory; both starts must reopen this same database.
+    const env = { ...process.env, DATA_DIR: process.env.UPTIME_KUMA_TEST_ROOT ? data : 'data', UPTIME_KUMA_HOST: '127.0.0.1',
         UPTIME_KUMA_PORT: String(port), UPTIME_KUMA_DB_TYPE: 'sqlite',
         UPTIME_KUMA_CHECK_UPDATE: '0', NODE_ENV: 'production' };
     const command = process.env.UPTIME_KUMA_TEST_ROOT ? process.execPath : 'uptime-kuma';
     const args = process.env.UPTIME_KUMA_TEST_ROOT ? ['server/server.js'] : [];
-    child = spawn(command, args, { cwd: root, env, stdio: ['ignore', 'pipe', 'pipe'] });
+    child = spawn(command, args, { cwd: process.env.UPTIME_KUMA_TEST_ROOT ? root : temporary,
+        env, stdio: ['ignore', 'pipe', 'pipe'] });
     child.stdout.on('data', chunk => log += chunk.toString());
     child.stderr.on('data', chunk => log += chunk.toString());
     child.on('error', error => log += error.toString());
