@@ -148,8 +148,12 @@ needed. Signing credentials are configured separately as described in the
 
 Previous package files, corresponding-source archives, and their verified
 signatures are retained in new signed snapshots, so clients with an older cached
-database can still fetch its packages
-during an update. The current sync database indexes the current manifest. Old
+database can still fetch its packages during an update. Retention authenticates
+the previous signed checksum manifest and requires every recorded package,
+source archive, and signature to remain present with the same hash. Removing or
+renaming an asset in the release listing fails publication rather than silently
+dropping it. Legacy signed manifests without source entries remain supported.
+The current sync database indexes the current manifest. Old
 release tags remain usable as pinned snapshots. Retention is intentionally
 unbounded; plan explicit garbage collection if the repository grows large.
 New corresponding-source filenames include the full package version and revision,

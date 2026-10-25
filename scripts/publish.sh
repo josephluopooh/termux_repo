@@ -50,6 +50,7 @@ if gh api "repos/$GITHUB_REPOSITORY/releases/latest" > previous/release.json 2> 
     $signed || { echo 'Refusing unsigned publication over an existing signed repository'; exit 1; }
     previous_tag=$(jq -r .tag_name previous/release.json)
     gh release download "$previous_tag" --repo "$GITHUB_REPOSITORY" --dir previous \
+        --pattern SHA256SUMS --pattern SHA256SUMS.sig \
         --pattern '*.pkg.tar.xz' --pattern '*.pkg.tar.xz.sig' \
         --pattern '*-source.tar.gz' --pattern '*-source.tar.gz.sig'
     python3 scripts/retain-release.py previous dist
