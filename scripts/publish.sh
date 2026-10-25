@@ -47,19 +47,12 @@ python3 scripts/repository.py dist
 # Fail closed on API errors other than a first-publication 404.
 mkdir -p previous
 if gh api "repos/$GITHUB_REPOSITORY/releases/latest" > previous/release.json 2> previous/api-error; then
+    $signed || { echo 'Refusing unsigned publication over an existing signed repository'; exit 1; }
     previous_tag=$(jq -r .tag_name previous/release.json)
     gh release download "$previous_tag" --repo "$GITHUB_REPOSITORY" --dir previous \
-        --pattern '*.pkg.tar.xz' --pattern '*.pkg.tar.xz.sig'
-    for package in previous/*.pkg.tar.xz; do
-        $signed || { echo 'Refusing unsigned publication over an existing signed repository'; exit 1; }
-        gpg --batch --verify "$package.sig" "$package"
-        target="dist/$(basename "$package")"
-        if [[ -e $target ]]; then
-            cmp "$package" "$target"
-        else
-            cp "$package" "$package.sig" dist/
-        fi
-    done
+        --pattern '*.pkg.tar.xz' --pattern '*.pkg.tar.xz.sig' \
+        --pattern '*-source.tar.gz' --pattern '*-source.tar.gz.sig'
+    python3 scripts/retain-release.py previous dist
 elif ! grep -q 'HTTP 404' previous/api-error; then
     cat previous/api-error >&2
     exit 1
@@ -72,6 +65,8 @@ if $signed; then
     done
     for source in dist/*-source.tar.gz; do
         [[ -f $source ]] || continue
+        # Keep the original verified signature for a retained source archive.
+        [[ ! -f $source.sig ]] || continue
         gpg --batch --yes --pinentry-mode loopback --passphrase-file "$GNUPGHOME/passphrase" --local-user "$fingerprint" --detach-sign "$source"
     done
 fi

@@ -42,5 +42,5 @@ termux_step_make_install() {
     python3 "$TERMUX_PKG_BUILDER_DIR/source-archive.py" \
         "$TERMUX_PKG_SRCDIR" "$TERMUX_PKG_BUILDER_DIR" \
         "$TERMUX_PKG_TMPDIR/dependencies.json" "$(go env GOMODCACHE)" \
-        "$TERMUX_OUTPUT_DIR/sources/adguardhome-${TERMUX_PKG_VERSION}-source.tar.gz"
+        "$TERMUX_OUTPUT_DIR/sources/adguardhome-${TERMUX_PKG_VERSION}-${TERMUX_PKG_REVISION:-0}-source.tar.gz"
 }

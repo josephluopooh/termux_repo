@@ -104,7 +104,8 @@ for archive in sorted(folder.glob('*.pkg.tar.xz')):
             assert 'bind_hosts: [127.0.0.1]' in defaults
             assert json.loads(tar.extractfile(prefix + 'share/doc/adguardhome/client-licenses/manifest.json').read())
         if name in ('adguardhome', 'vaultwarden'):
-            assert any(folder.glob(name + '-*-source.tar.gz')), f'Missing corresponding source for {name}'
+            source = folder / f'{name}-{info["pkgver"][0]}-source.tar.gz'
+            assert source.is_file() and source.stat().st_size > 0, f'Missing corresponding source: {source.name}'
         if name == 'copyparty':
             assert arch == 'any' and '.INSTALL' not in tar.getnames()
             assert not any('/site-packages/' in m.name for m in tar.getmembers())

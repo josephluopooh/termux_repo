@@ -79,6 +79,19 @@ It does not perform the native runtime test or publish a release.
 
 ## Validation
 
+Before starting the build matrix, the workflow runs the bounded launcher and
+release-retention regression tests. Run these locally with Python 3 and GnuPG:
+
+```sh
+python3 -m unittest discover -s tests -p 'test_uptime_kuma_launcher.py' -v
+python3 -m unittest discover -s tests -p 'test_release_retention.py' -v
+```
+
+These tests use temporary directories, a small runtime stand-in for the launcher,
+and public signed bytes from the previous release; they create no signing keys.
+The native runtime job also exercises the real Kuma launcher with a relative
+data directory outside the package and checks database persistence after restart.
+
 [verify-packages.py](../scripts/verify-packages.py) checks `.PKGINFO`, package
 names, conflicts/provides, ELF architecture, the Android linker, and cJSON
 linkage. The build also checks WeeChat's CMake feature switches. See the
@@ -133,8 +146,12 @@ needed. Signing credentials are configured separately as described in the
    signed releases become `latest`. Missing or mismatched signing material after
    activation fails publication; it never downgrades the signed repository.
 
-Previous package files and their verified signatures are retained in new signed
-snapshots, so clients with an older cached database can still fetch its packages
+Previous package files, corresponding-source archives, and their verified
+signatures are retained in new signed snapshots, so clients with an older cached
+database can still fetch its packages
 during an update. The current sync database indexes the current manifest. Old
 release tags remain usable as pinned snapshots. Retention is intentionally
 unbounded; plan explicit garbage collection if the repository grows large.
+New corresponding-source filenames include the full package version and revision,
+so rebuilding the same upstream version cannot replace an older package's source.
+Previously published source filenames are retained unchanged.

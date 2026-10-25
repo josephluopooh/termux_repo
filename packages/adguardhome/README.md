@@ -55,7 +55,7 @@ transitions still need device testing; container results do not establish those.
 
 AdGuard Home is GPL-3.0; its full license and Go/npm dependency notices are
 installed under `$PREFIX/share/doc/adguardhome/`. The release includes
-`adguardhome-0.107.79-source.tar.gz` with the source, packaging recipe, matching
+`adguardhome-0.107.79-<package-revision>-source.tar.gz` with the source, packaging recipe, matching
 frontend dependencies and runtime Go module source. Supplemental npm notices
 missing from distribution tarballs are copied from pinned upstream commits;
 [their manifest](client-license-supplements/manifest.json) records URLs/hashes.

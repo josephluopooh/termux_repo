@@ -14,7 +14,19 @@ concurrency:
   group: pacman-repository-${{ github.ref }}
   cancel-in-progress: false
 jobs:
+  preflight:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Check launcher persistence and signed snapshot retention
+        run: |
+          python3 -m unittest discover -s tests -p 'test_uptime_kuma_launcher.py' -v
+          python3 -m unittest discover -s tests -p 'test_release_retention.py' -v
   build:
+    needs: preflight
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     strategy:

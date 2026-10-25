@@ -54,7 +54,7 @@ is AGPL-3.0-only, pinned by SHA-256 and built with Rust 1.99.0,
 `aarch64-linux-android`. It contains no glibc binary, bundled database server,
 proot layer or TUR recipe. License texts and a dependency manifest are in
 `$PREFIX/share/doc/vaultwarden`; each release also provides
-`vaultwarden-1.37.4-source.tar.gz` with the corresponding source, locked crates,
+`vaultwarden-1.37.4-<package-revision>-source.tar.gz` with the corresponding source, locked crates,
 and packaging files. Its `.cargo/config.toml` supports offline crate resolution.
 Reproduce the Android build with this repository's pinned Termux framework and
 builder as described in [building](../../docs/building.md), using the included

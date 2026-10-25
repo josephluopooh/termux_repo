@@ -55,6 +55,6 @@ termux_step_make_install() {
         "$TERMUX_PKG_BUILDER_DIR/README.md" "$TERMUX_PKG_BUILDER_DIR/"*.py \
         "$TERMUX_PKG_BUILDER_DIR/"*.patch "$source/termux-packaging/"
     cp -R "$TERMUX_PKG_BUILDER_DIR/license-texts" "$source/termux-packaging/"
-    tar -czf "$TERMUX_SCRIPTDIR/output/sources/vaultwarden-${TERMUX_PKG_VERSION}-source.tar.gz" \
+    tar -czf "$TERMUX_SCRIPTDIR/output/sources/vaultwarden-${TERMUX_PKG_VERSION}-${TERMUX_PKG_REVISION:-0}-source.tar.gz" \
         -C "$TERMUX_PKG_TMPDIR" "$(basename "$source")"
 }
